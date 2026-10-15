@@ -176,3 +176,8 @@ export function generarPuntosFijos(sesion, sesiones, catalogos) {
       posicion: f.posicion,
     }));
 }
+
+export function validarDeliberacion(texto) {
+  if (typeof texto !== 'string') throw new ApiError('VALIDACION', 'La deliberación debe ser texto.');
+  if (texto.length > MAX_TEXTO) throw new ApiError('VALIDACION', 'La deliberación es demasiado larga.');
+}

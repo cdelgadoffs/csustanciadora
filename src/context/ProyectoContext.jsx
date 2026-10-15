@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import {
   listarCatalogos, listarSesiones, crearSesiones, celebrarSesion,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi,
+  guardarDeliberacion as guardarDeliberacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
   adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi,
   descargarArchivo as descargarArchivoEnApi,
@@ -157,6 +158,10 @@ export function ProyectoProvider({ children }) {
     const editado = conSync(await marcarPuntoEnApi(id, tratado));
     aplicarPuntos(puntos.map((p) => (p.id === id ? editado : p)));
   }
+  async function guardarDeliberacion(id, texto) {
+    const editado = conSync(await guardarDeliberacionEnApi(id, texto));
+    aplicarPuntos(puntos.map((p) => (p.id === id ? editado : p)));
+  }
   async function marcarTodosPuntos(tratado) {
     aplicarPuntos((await marcarPuntosEnApi(sesionActivaFecha, tratado)).map(conSync));
   }
@@ -185,7 +190,7 @@ export function ProyectoProvider({ children }) {
     sesionActivaFecha, cargarSesion,
     sesionFinalizada, finalizarSesion,
     PUNTOS: puntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
-    marcarPunto, marcarTodosPuntos, adjuntarArchivos, eliminarArchivo, descargarArchivo,
+    marcarPunto, marcarTodosPuntos, guardarDeliberacion, adjuntarArchivos, eliminarArchivo, descargarArchivo,
     agregarSesiones,
     guardarBorrador, obtenerBorrador, eliminarBorrador,
     cargando, error,

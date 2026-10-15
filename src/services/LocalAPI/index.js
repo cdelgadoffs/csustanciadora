@@ -8,7 +8,7 @@ import {
   validarFechasISO, calcularEstados,
   camposPunto, validarPunto, normalizarPunto,
   validarArchivos, prepararArchivos,
-  esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos,
+  validarDeliberacion, esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos,
 } from './reglas.js';
 
 async function exigirSesionAbierta(sesionId) {
@@ -65,8 +65,10 @@ export async function celebrarSesion(id) {
   return lista.find((s) => s.id === id);
 }
 
-function sinPosicion({ posicion, ...punto }) {
-  return punto;
+function sinPosicion(punto) {
+  const copia = { ...punto };
+  delete copia.posicion;
+  return copia;
 }
 
 export async function listarPuntos(sesionId) {
@@ -162,6 +164,19 @@ export async function marcarPunto(id, tratado) {
   await exigirSesionAbierta(actual.sesionId);
   if (!!actual.tratado === tratado) return { ...actual, tratado };
   const punto = { ...actual, tratado, version: actual.version + 1, modificadoEn: new Date().toISOString() };
+  await guardar(STORE_PUNTOS, punto);
+  return punto;
+}
+
+export async function guardarDeliberacion(id, texto) {
+  exigirEscritura();
+  exigirNoFijo(id);
+  validarDeliberacion(texto);
+  const actual = await obtener(STORE_PUNTOS, id);
+  if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  await exigirSesionAbierta(actual.sesionId);
+  if ((actual.deliberacion ?? '') === texto) return { ...actual, deliberacion: texto };
+  const punto = { ...actual, deliberacion: texto, version: actual.version + 1, modificadoEn: new Date().toISOString() };
   await guardar(STORE_PUNTOS, punto);
   return punto;
 }

@@ -23,3 +23,8 @@
   border-color: #1a56db;
   box-shadow: 0 0 0 2px rgba(26, 86, 219, 0.15);
 }
+.base-textarea:disabled {
+  background: #f5f6f8;
+  color: #555;
+  cursor: default;
+}

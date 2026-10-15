@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import '../../styles/base/Textarea.css';
 
-export default function Textarea({ value, onChange, placeholder }) {
+export default function Textarea({ value, onChange, placeholder, disabled = false }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -17,6 +17,7 @@ export default function Textarea({ value, onChange, placeholder }) {
       value={value}
       onChange={(e) => onChange && onChange(e.target.value)}
       placeholder={placeholder}
+      disabled={disabled}
       rows={1}
     />
   );

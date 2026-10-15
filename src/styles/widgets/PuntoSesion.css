@@ -136,3 +136,21 @@
   border-color: #f5c2c0;
   color: #c62828;
 }
+.widget-punto-sesion-deliberacion {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 11px 18px 14px;
+  border-top: 1px solid #c9c9ca;
+}
+.widget-punto-sesion-tratado .widget-punto-sesion-deliberacion {
+  border-top-color: #cfe6d3;
+}
+.widget-punto-sesion-deliberacion-estado {
+  align-self: flex-end;
+  font-size: 11px;
+  color: #999;
+}
+.widget-punto-sesion-deliberacion-error {
+  color: #c62828;
+}
