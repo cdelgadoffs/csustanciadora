@@ -1,9 +1,11 @@
 export const CATALOGOS_SEMILLA = {
   secciones: [
-    { id: 'informes', nombre: 'Informes', requiereAcuerdo: false },
-    { id: 'dictamenes', nombre: 'Dictámenes', requiereAcuerdo: true },
-    { id: 'acuerdos', nombre: 'Acuerdos', requiereAcuerdo: true },
-    { id: 'asuntos generales', nombre: 'Asuntos generales', requiereAcuerdo: true },
+    { id: 'asuntos', nombre: 'Asunto', requiereAcuerdo: false },
+  ],
+  puntosFijos: [
+    { id: 'orden-dia', texto: 'Aprobación, en su caso, del orden del día.', posicion: 'inicio', condicion: 'siempre', encabezado: false },
+    { id: 'acta-anterior', texto: 'Aprobación, en su caso, del acta de la sesión del {fecha}.', posicion: 'inicio', condicion: 'sesionAnteriorCelebrada', encabezado: false },
+    { id: 'asuntos-generales', texto: 'Asuntos generales.', posicion: 'final', condicion: 'siempre', encabezado: true },
   ],
   remitentes: [
     { id: 'pleno', nombre: 'Pleno' },

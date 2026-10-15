@@ -48,36 +48,38 @@ export default function PuntoSesion() {
           <span className={'widget-punto-sesion-titulo' + (punto.confidencial ? ' widget-punto-sesion-titulo-confidencial' : '')}>
             {titulo}
           </span>
-          <span className="widget-punto-sesion-dependencia">{nombreRemitente}</span>
+          {nombreRemitente && <span className="widget-punto-sesion-dependencia">{nombreRemitente}</span>}
         </div>
-        <div className="widget-punto-sesion-columnas">
-          <div className="widget-punto-sesion-columna widget-punto-sesion-principal">
-            <span className="widget-punto-sesion-label">{esInforme ? 'Informe' : 'Punto de acuerdo'}</span>
-            <div className="widget-punto-sesion-contenido">{punto.contenido || 'Sin contenido'}</div>
-            {!esInforme && (
-              <div className="widget-punto-sesion-bloque-acuerdo">
-                <span className="widget-punto-sesion-label">Acuerdo</span>
-                <div className="widget-punto-sesion-acuerdo">{punto.acuerdo || 'Sin acuerdo'}</div>
+        {!punto.fijo && (
+          <div className="widget-punto-sesion-columnas">
+            <div className="widget-punto-sesion-columna widget-punto-sesion-principal">
+              <span className="widget-punto-sesion-label">{esInforme ? 'Asunto' : 'Punto de acuerdo'}</span>
+              <div className="widget-punto-sesion-contenido">{punto.contenido || 'Sin contenido'}</div>
+              {!esInforme && (
+                <div className="widget-punto-sesion-bloque-acuerdo">
+                  <span className="widget-punto-sesion-label">Acuerdo</span>
+                  <div className="widget-punto-sesion-acuerdo">{punto.acuerdo || 'Sin acuerdo'}</div>
+                </div>
+              )}
+            </div>
+            {punto.archivos.length > 0 && (
+              <div className="widget-punto-sesion-columna widget-punto-sesion-archivos">
+                {punto.archivos.map((a, i) => {
+                  const { icono, tono } = estiloArchivo(a.nombre);
+                  return (
+                    <BadgeDinamico
+                      key={a.id ?? i}
+                      texto={a.nombre}
+                      icono={icono}
+                      tono={tono}
+                      onClick={a.id ? () => descargar(a) : undefined}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>
-          {punto.archivos.length > 0 && (
-            <div className="widget-punto-sesion-columna widget-punto-sesion-archivos">
-              {punto.archivos.map((a, i) => {
-                const { icono, tono } = estiloArchivo(a.nombre);
-                return (
-                  <BadgeDinamico
-                    key={a.id ?? i}
-                    texto={a.nombre}
-                    icono={icono}
-                    tono={tono}
-                    onClick={a.id ? () => descargar(a) : undefined}
-                  />
-                );
-              })}
-            </div>
-          )}
-        </div>
+        )}
         <div className="widget-punto-sesion-navegacion">
           <OpcionesNavegacion
             onAnterior={() => irA(-1)}
@@ -87,7 +89,7 @@ export default function PuntoSesion() {
             etiquetaAnterior="Punto anterior"
             etiquetaSiguiente="Punto siguiente"
           />
-          {!sesionFinalizada && <OpcionesAUD punto={punto} ocultar={['adjuntar', 'editar']} />}
+          {!sesionFinalizada && !punto.fijo && <OpcionesAUD punto={punto} ocultar={['adjuntar', 'editar']} />}
         </div>
       </Card>
     </div>

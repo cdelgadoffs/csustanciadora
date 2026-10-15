@@ -11,10 +11,7 @@ export function AjustesVisualesProvider({ children }) {
     setAjustes((a) => ({ ...a, [clave]: valor }));
   }
 
-  const value = {
-    vistaCompletaProyecto: ajustes.vistaCompletaProyecto === true,
-    cambiarAjuste,
-  };
+  const value = { ajustes, cambiarAjuste };
   return <AjustesVisualesContext.Provider value={value}>{children}</AjustesVisualesContext.Provider>;
 }
 

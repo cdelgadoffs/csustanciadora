@@ -130,3 +130,49 @@ export function normalizarPunto(p, catalogos) {
     confidencial: p.confidencial,
   };
 }
+
+const MESES_TEXTO = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+function fechaEnTexto(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${d} de ${MESES_TEXTO[m - 1]} de ${y}`;
+}
+
+export function esPuntoFijo(id) {
+  return typeof id === 'string' && id.startsWith('fijo:');
+}
+
+export function exigirNoFijo(id) {
+  if (esPuntoFijo(id)) {
+    throw new ApiError('VALIDACION', 'Los puntos fijos se generan automáticamente y no se pueden modificar.');
+  }
+}
+
+export function analizarPuntoFijo(id) {
+  const [, sesionId, clave] = id.split(':');
+  return { sesionId, clave };
+}
+
+export function generarPuntosFijos(sesion, sesiones, catalogos) {
+  const anteriorCelebrada = sesiones
+    .filter((s) => s.celebrada && s.id < sesion.id)
+    .sort((a, b) => (a.id < b.id ? 1 : -1))[0];
+  return (catalogos.puntosFijos || [])
+    .filter((f) => f.condicion !== 'sesionAnteriorCelebrada' || anteriorCelebrada)
+    .map((f) => ({
+      id: `fijo:${sesion.id}:${f.id}`,
+      sesionId: sesion.id,
+      seccion: catalogos.secciones?.[0]?.id ?? null,
+      remitente: null,
+      contenido: anteriorCelebrada ? f.texto.replace('{fecha}', fechaEnTexto(anteriorCelebrada.id)) : f.texto,
+      acuerdo: '',
+      confidencial: false,
+      archivos: [],
+      tratado: f.encabezado ? false : !!sesion.fijosTratados?.[f.id],
+      version: sesion.version,
+      fijo: true,
+      clave: f.id,
+      encabezado: !!f.encabezado,
+      posicion: f.posicion,
+    }));
+}

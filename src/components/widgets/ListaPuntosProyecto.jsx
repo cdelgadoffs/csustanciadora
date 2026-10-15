@@ -5,8 +5,6 @@ import BadgeDinamico from '../base/BadgeDinamico.jsx';
 import OpcionesAUD from './OpcionesAUD.jsx';
 import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
-import { useUI } from '../../context/UIContext.jsx';
-import { useAjustesVisuales } from '../../context/AjustesVisualesContext.jsx';
 import { estiloArchivo, guardarEnDisco } from '../../utils/archivos.js';
 import '../../styles/widgets/ListaPuntosProyecto.css';
 
@@ -26,7 +24,7 @@ function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opcione
           </span>
           <div className="widget-lista-puntos-header-derecha">
             <IndicadorSync estado={punto.sincronizacion} />
-            <span className="widget-lista-puntos-dependencia">{nombreRemitente}</span>
+            {nombreRemitente && <span className="widget-lista-puntos-dependencia">{nombreRemitente}</span>}
             {opciones && (
               <div className="widget-lista-puntos-opciones">
                 <div className="widget-lista-puntos-opciones-interior">{opciones}</div>
@@ -34,10 +32,10 @@ function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opcione
             )}
           </div>
         </div>
-        <div className="widget-lista-puntos-fila">
-          <span className="widget-lista-puntos-label">{esInforme ? 'Informe' : 'Punto de acuerdo'}</span>
+        {!punto.fijo && (<div className="widget-lista-puntos-fila">
+          <span className="widget-lista-puntos-label">{esInforme ? 'Asunto' : 'Punto de acuerdo'}</span>
           <div className="widget-lista-puntos-contenido">{punto.contenido || 'Sin contenido'}</div>
-        </div>
+        </div>)}
         {!esInforme && (
           <div className="widget-lista-puntos-fila">
             <span className="widget-lista-puntos-label">Acuerdo</span>
@@ -70,21 +68,34 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
   if (deLaSeccion.length === 0) {
     if (estadoCarga === 'error') return null;
     if (estadoCarga === 'cargando') return <div className="widget-lista-puntos-vacio">Cargando…</div>;
-    return <div className="widget-lista-puntos-vacio">Sin puntos en {seccion.nombre}.</div>;
+    return <div className="widget-lista-puntos-vacio">Sin asuntos registrados.</div>;
   }
-  return deLaSeccion.map((p, i) => (
-    <TarjetaPunto
-      key={p.id}
-      punto={p}
-      titulo={`${seccion.nombre} ${i + 1}`}
-      requiereAcuerdo={seccion.requiereAcuerdo}
-      nombreRemitente={remitentes.find((r) => r.id === p.remitente)?.nombre ?? p.remitente}
-      opciones={renderOpciones(p, i, deLaSeccion, seccion.id)}
-      onDescargar={onDescargar}
-      seleccionada={seleccionadoId === p.id}
-      onSeleccionar={() => seleccionar(p.id, seccion.id)}
-    />
-  ));
+  const registrados = deLaSeccion.filter((p) => !p.fijo);
+  const vacio = registrados.length === 0 && estadoCarga === 'listo' && (
+    <div key="vacio" className="widget-lista-puntos-vacio">Sin asuntos registrados.</div>
+  );
+  const elementos = deLaSeccion.map((p) => {
+    if (p.encabezado) {
+      return <div key={p.id} className="widget-lista-puntos-encabezado">{p.contenido}</div>;
+    }
+    const i = registrados.indexOf(p);
+    return (
+      <TarjetaPunto
+        key={p.id}
+        punto={p}
+        titulo={p.fijo ? p.contenido : `${seccion.nombre} ${i + 1}`}
+        requiereAcuerdo={seccion.requiereAcuerdo}
+        nombreRemitente={remitentes.find((r) => r.id === p.remitente)?.nombre ?? p.remitente}
+        opciones={p.fijo ? null : renderOpciones(p, i, registrados, seccion.id)}
+        onDescargar={onDescargar}
+        seleccionada={seleccionadoId === p.id}
+        onSeleccionar={() => seleccionar(p.id)}
+      />
+    );
+  });
+  const indiceCierre = deLaSeccion.findIndex((p) => p.encabezado);
+  if (vacio) elementos.splice(indiceCierre === -1 ? elementos.length : indiceCierre, 0, vacio);
+  return elementos;
 }
 
 export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtra }) {
@@ -92,12 +103,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   const [errorAccion, setErrorAccion] = useState(null);
   const [moviendo, setMoviendo] = useState(false);
   const [seleccionadoId, setSeleccionadoId] = useState(null);
-  const { seccionActivaProyecto, setSeccionActivaProyecto } = useUI();
-  const { vistaCompletaProyecto } = useAjustesVisuales();
-  const seleccionar = (id, seccionId) => {
-    setSeccionActivaProyecto(seccionId);
-    setSeleccionadoId(id);
-  };
+  const seleccionar = setSeleccionadoId;
   const estadoCarga = error ? 'error' : cargando ? 'cargando' : 'listo';
   const avisoError = (error || errorAccion) && (
     <div className="widget-lista-puntos-error">
@@ -146,22 +152,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
     </>
   ));
 
-  if (vistaCompletaProyecto) {
-    return (
-      <div className="widget-lista-puntos-proyecto">
-        {avisoError}
-        {SECCIONES_DOCUMENTO.map((s) => (
-          <div key={s.id} className="widget-lista-puntos-grupo">
-            <div className="widget-lista-puntos-separador">{s.nombre}</div>
-            {listaDeSeccion(puntos, s, REMITENTES, estadoCarga, renderOpciones, descargar, seleccionadoId, seleccionar)}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  const seccionId = seccionActivaProyecto ?? SECCIONES_DOCUMENTO[0]?.id;
-  const seccion = SECCIONES_DOCUMENTO.find((s) => s.id === seccionId);
+  const seccion = SECCIONES_DOCUMENTO[0];
 
   return (
     <div className="widget-lista-puntos-proyecto">

@@ -124,16 +124,19 @@ export function ProyectoProvider({ children }) {
     setPuntos(lista);
     guardarCache(cachePuntos(sesionActivaFecha), lista);
   }
+  async function recargarPuntos() {
+    aplicarPuntos((await listarPuntos(sesionActivaFecha)).map(conSync));
+  }
   async function agregarPunto(datos) {
-    const creado = conSync(await crearPunto(sesionActivaFecha, datos));
-    aplicarPuntos([...puntos, creado]);
+    await crearPunto(sesionActivaFecha, datos);
+    await recargarPuntos();
   }
   async function editarPunto(id, version, cambios) {
     try {
       const editado = conSync(await editarPuntoEnApi(id, version, cambios));
       aplicarPuntos(puntos.map((p) => (p.id === id ? editado : p)));
     } catch (e) {
-      if (e.codigo === 'CONFLICTO') aplicarPuntos((await listarPuntos(sesionActivaFecha)).map(conSync));
+      if (e.codigo === 'CONFLICTO') await recargarPuntos();
       throw e;
     }
   }
@@ -143,10 +146,10 @@ export function ProyectoProvider({ children }) {
   }
   async function reordenarPuntos(seccion, ids) {
     try {
-      const reordenados = (await reordenarPuntosEnApi(sesionActivaFecha, seccion, ids)).map(conSync);
-      aplicarPuntos([...puntos.filter((p) => p.seccion !== seccion), ...reordenados]);
+      await reordenarPuntosEnApi(sesionActivaFecha, seccion, ids);
+      await recargarPuntos();
     } catch (e) {
-      if (e.codigo === 'CONFLICTO') aplicarPuntos((await listarPuntos(sesionActivaFecha)).map(conSync));
+      if (e.codigo === 'CONFLICTO') await recargarPuntos();
       throw e;
     }
   }

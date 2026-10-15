@@ -10,6 +10,7 @@ import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/MenuPanelControl.jsx';
 import { useUI, ANCHO_SIDEBAR2 } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
+import { contarPuntos } from '../utils/puntos.js';
 import { encabezadoSesion } from '../utils/sesiones.js';
 
 const ANCHO_SIDEBAR1_SESION = 340;
@@ -43,7 +44,7 @@ export default function Sesion() {
       <Sidebar2
         izquierda={izquierdaSidebar2}
         badge="Sesión en curso"
-        subtitulo={`${PUNTOS.length} ${PUNTOS.length === 1 ? 'punto' : 'puntos'}`}
+        subtitulo={`${contarPuntos(PUNTOS)} ${contarPuntos(PUNTOS) === 1 ? 'punto' : 'puntos'}`}
         mostrarCerrar={false}
         accionesHeader={<BotonMarcarTodos />}
       >

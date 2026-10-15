@@ -8,6 +8,7 @@ import {
   validarFechasISO, calcularEstados,
   camposPunto, validarPunto, normalizarPunto,
   validarArchivos, prepararArchivos,
+  esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos,
 } from './reglas.js';
 
 async function exigirSesionAbierta(sesionId) {
@@ -64,12 +65,24 @@ export async function celebrarSesion(id) {
   return lista.find((s) => s.id === id);
 }
 
+function sinPosicion({ posicion, ...punto }) {
+  return punto;
+}
+
 export async function listarPuntos(sesionId) {
-  const todos = await obtenerTodos(STORE_PUNTOS);
+  const sesiones = await obtenerTodos(STORE_SESIONES);
+  const sesion = sesiones.find((s) => s.id === sesionId);
+  if (!sesion) return [];
   const verConfidencial = puedeVerConfidencial();
-  return todos
+  const registrados = (await obtenerTodos(STORE_PUNTOS))
     .filter((p) => p.sesionId === sesionId && (verConfidencial || !p.confidencial))
     .sort(porOrden);
+  const fijos = generarPuntosFijos(sesion, sesiones, await listarCatalogos());
+  return [
+    ...fijos.filter((f) => f.posicion === 'inicio').map(sinPosicion),
+    ...registrados,
+    ...fijos.filter((f) => f.posicion === 'final').map(sinPosicion),
+  ];
 }
 
 export async function crearPunto(sesionId, datos) {
@@ -107,6 +120,7 @@ export async function crearPunto(sesionId, datos) {
 
 export async function editarPunto(id, version, cambios) {
   exigirEscritura();
+  exigirNoFijo(id);
   const actual = await obtener(STORE_PUNTOS, id);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
   await exigirSesionAbierta(actual.sesionId);
@@ -128,9 +142,21 @@ export async function editarPunto(id, version, cambios) {
   return punto;
 }
 
+async function marcarPuntoFijo(id, tratado) {
+  const { sesionId, clave } = analizarPuntoFijo(id);
+  const sesion = await exigirSesionAbierta(sesionId);
+  const fijo = (await listarPuntos(sesionId)).find((p) => p.id === id);
+  if (!fijo) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
+  if (fijo.encabezado) throw new ApiError('VALIDACION', 'Este punto es un título y no se marca.');
+  if (fijo.tratado === tratado) return fijo;
+  await guardar(STORE_SESIONES, { ...sesion, fijosTratados: { ...(sesion.fijosTratados ?? {}), [clave]: tratado } });
+  return { ...fijo, tratado };
+}
+
 export async function marcarPunto(id, tratado) {
   exigirEscritura();
   if (typeof tratado !== 'boolean') throw new ApiError('VALIDACION', 'El valor de "tratado" debe ser verdadero o falso.');
+  if (esPuntoFijo(id)) return marcarPuntoFijo(id, tratado);
   const actual = await obtener(STORE_PUNTOS, id);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
   await exigirSesionAbierta(actual.sesionId);
@@ -143,22 +169,29 @@ export async function marcarPunto(id, tratado) {
 export async function marcarPuntos(sesionId, tratado) {
   exigirEscritura();
   if (typeof tratado !== 'boolean') throw new ApiError('VALIDACION', 'El valor de "tratado" debe ser verdadero o falso.');
-  await exigirSesionAbierta(sesionId);
-  const verConfidencial = puedeVerConfidencial();
-  const visibles = (await obtenerTodos(STORE_PUNTOS))
-    .filter((p) => p.sesionId === sesionId && (verConfidencial || !p.confidencial));
+  const sesion = await exigirSesionAbierta(sesionId);
+  const lista = await listarPuntos(sesionId);
   const ahora = new Date().toISOString();
-  const cambiados = visibles
-    .filter((p) => !!p.tratado !== tratado)
+  const cambiados = lista
+    .filter((p) => !p.fijo && !!p.tratado !== tratado)
     .map((p) => ({ ...p, tratado, version: p.version + 1, modificadoEn: ahora }));
-  await escribirVarios({ poner: cambiados.map((valor) => ({ store: STORE_PUNTOS, valor })) });
-  return visibles
-    .map((p) => cambiados.find((c) => c.id === p.id) ?? { ...p, tratado: !!p.tratado })
-    .sort(porOrden);
+  const clavesFijas = lista.filter((p) => p.fijo && !p.encabezado).map((p) => p.clave);
+  const cambianFijos = lista.some((p) => p.fijo && !p.encabezado && p.tratado !== tratado);
+  await escribirVarios({
+    poner: [
+      ...cambiados.map((valor) => ({ store: STORE_PUNTOS, valor })),
+      ...(cambianFijos ? [{
+        store: STORE_SESIONES,
+        valor: { ...sesion, fijosTratados: { ...(sesion.fijosTratados ?? {}), ...Object.fromEntries(clavesFijas.map((c) => [c, tratado])) } },
+      }] : []),
+    ],
+  });
+  return listarPuntos(sesionId);
 }
 
 export async function eliminarPunto(id) {
   exigirEscritura();
+  exigirNoFijo(id);
   const actual = await obtener(STORE_PUNTOS, id);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
   await exigirSesionAbierta(actual.sesionId);
@@ -172,6 +205,7 @@ export async function eliminarPunto(id) {
 
 export async function adjuntarArchivos(puntoId, archivos) {
   exigirEscritura();
+  exigirNoFijo(puntoId);
   const actual = await obtener(STORE_PUNTOS, puntoId);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
   await exigirSesionAbierta(actual.sesionId);
@@ -195,6 +229,7 @@ export async function adjuntarArchivos(puntoId, archivos) {
 
 export async function eliminarArchivo(puntoId, archivoId) {
   exigirEscritura();
+  exigirNoFijo(puntoId);
   const actual = await obtener(STORE_PUNTOS, puntoId);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
   await exigirSesionAbierta(actual.sesionId);
@@ -229,6 +264,7 @@ export async function reordenarPuntos(sesionId, seccion, ids) {
   const catalogos = await listarCatalogos();
   if (!catalogos.secciones.some((s) => s.id === seccion)) throw new ApiError('VALIDACION', 'Sección inválida.');
   if (!Array.isArray(ids)) throw new ApiError('VALIDACION', 'El orden debe ser una lista de ids.');
+  ids.forEach(exigirNoFijo);
   const actuales = (await obtenerTodos(STORE_PUNTOS))
     .filter((p) => p.sesionId === sesionId && p.seccion === seccion)
     .sort(porOrden);

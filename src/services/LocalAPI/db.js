@@ -1,7 +1,8 @@
+import { ApiError } from '../ApiError.js';
 import { CATALOGOS_SEMILLA } from './semilla.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 5;
+const DB_VERSION = 7;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
@@ -24,9 +25,46 @@ function asignarOrden(store) {
   };
 }
 
+const ORDEN_SECCIONES_ANTERIORES = ['informes', 'dictamenes', 'acuerdos', 'asuntos generales'];
+
+function unificarSecciones(store) {
+  store.getAll().onsuccess = (evento) => {
+    const secciones = CATALOGOS_SEMILLA.secciones;
+    const porSesion = new Map();
+    evento.target.result.forEach((p) => {
+      if (!porSesion.has(p.sesionId)) porSesion.set(p.sesionId, []);
+      porSesion.get(p.sesionId).push(p);
+    });
+    porSesion.forEach((lista) => {
+      lista
+        .sort((a, b) => (a.seccion === b.seccion
+          ? (a.orden || 0) - (b.orden || 0)
+          : ORDEN_SECCIONES_ANTERIORES.indexOf(a.seccion) - ORDEN_SECCIONES_ANTERIORES.indexOf(b.seccion)))
+        .forEach((p, i) => store.put({ ...p, seccion: secciones[0].id, orden: i + 1 }));
+    });
+  };
+}
+
+let conexion = null;
+
 function abrirDB() {
+  if (!conexion) {
+    conexion = conectar().catch((e) => {
+      conexion = null;
+      throw e;
+    });
+  }
+  return conexion;
+}
+
+function conectar() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
+    let bloqueada = false;
+    req.onblocked = () => {
+      bloqueada = true;
+      reject(new ApiError('NO_DISPONIBLE', 'Hay otra pestaña de la aplicación con una versión anterior abierta. Ciérrala o recárgala e intenta de nuevo.'));
+    };
     req.onupgradeneeded = (evento) => {
       const db = req.result;
       if (!db.objectStoreNames.contains(STORE_SESIONES)) {
@@ -43,8 +81,26 @@ function abrirDB() {
         Object.entries(CATALOGOS_SEMILLA).forEach(([nombre, items]) => store.put({ nombre, items }));
       }
       if (evento.oldVersion < 5) asignarOrden(req.transaction.objectStore(STORE_PUNTOS));
+      if (evento.oldVersion < 6 && evento.oldVersion > 0) {
+        req.transaction.objectStore(STORE_CATALOGOS).put({ nombre: 'secciones', items: CATALOGOS_SEMILLA.secciones });
+        unificarSecciones(req.transaction.objectStore(STORE_PUNTOS));
+      }
+      if (evento.oldVersion < 7 && evento.oldVersion > 0) {
+        req.transaction.objectStore(STORE_CATALOGOS).put({ nombre: 'puntosFijos', items: CATALOGOS_SEMILLA.puntosFijos });
+      }
     };
-    req.onsuccess = () => resolve(req.result);
+    req.onsuccess = () => {
+      const db = req.result;
+      if (bloqueada) {
+        db.close();
+        return;
+      }
+      db.onversionchange = () => {
+        db.close();
+        conexion = null;
+      };
+      resolve(db);
+    };
     req.onerror = () => reject(req.error);
   });
 }

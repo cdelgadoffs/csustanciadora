@@ -10,7 +10,6 @@ import ListaPuntosProyecto from '../components/widgets/ListaPuntosProyecto.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/MenuPanelControl.jsx';
 import { useUI, ANCHO_SIDEBAR3, ALTO_TOPBAR, ALTO_CINTA } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
-import { useAjustesVisuales } from '../context/AjustesVisualesContext.jsx';
 import { encabezadoSesion } from '../utils/sesiones.js';
 import '../styles/pages/ProyectoOrdenDia.css';
 
@@ -23,7 +22,6 @@ export default function ProyectoOrdenDia() {
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
   const { sesionSeleccionada } = useProyecto();
-  const { vistaCompletaProyecto, cambiarAjuste } = useAjustesVisuales();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const panelIzquierda = izquierdaSidebar3 + (sidebar3Abierto ? ANCHO_SIDEBAR3 : 0);
   const arriba = ALTO_TOPBAR + ALTO_CINTA;
@@ -34,12 +32,6 @@ export default function ProyectoOrdenDia() {
       <Topbar
         terminoBusqueda={terminoBusqueda}
         onCambiarBusqueda={setTerminoBusqueda}
-        opcionesConfiguracion={[
-          vistaCompletaProyecto
-            ? { id: 'vista', label: 'Ver por sección', icono: 'ri-list-unordered' }
-            : { id: 'vista', label: 'Ver lista completa', icono: 'ri-stack-line' },
-        ]}
-        onSeleccionarConfiguracion={() => cambiarAjuste('vistaCompletaProyecto', !vistaCompletaProyecto)}
       />
       <CintaSesiones textoVacio="Aún no hay sesiones programadas." />
       <Sidebar1
@@ -54,7 +46,7 @@ export default function ProyectoOrdenDia() {
         abierto={sidebar3Abierto}
         izquierda={izquierdaSidebar3}
         arriba={arribaSidebar}
-        badge={puntoEnEdicionId ? 'Editar punto' : 'Nuevo punto'}
+        badge={puntoEnEdicionId ? 'Editar asunto' : 'Nuevo asunto'}
         onCerrar={cerrarSidebar3}
       >
         <FormularioPunto />

@@ -33,8 +33,9 @@ function tieneContenido(f) {
 
 export default function FormularioPunto() {
   const { SECCIONES_DOCUMENTO, REMITENTES, PUNTOS, agregarPunto, editarPunto, eliminarArchivo, descargarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
-  const { sidebar3Abierto, cerrarSidebar3, seccionNuevoPunto, puntoEnEdicionId } = useUI();
-  const [form, setForm] = useState(() => estadoVacio(seccionNuevoPunto));
+  const { sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId } = useUI();
+  const seccionUnica = SECCIONES_DOCUMENTO[0]?.id || '';
+  const [form, setForm] = useState(() => estadoVacio(seccionUnica));
   const [restaurado, setRestaurado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState(null);
@@ -68,7 +69,7 @@ export default function FormularioPunto() {
       return;
     }
     let vigente = true;
-    const seccion = seccionNuevoPunto || SECCIONES_DOCUMENTO[0]?.id || '';
+    const seccion = seccionUnica;
     setForm(estadoVacio(seccion));
     obtenerBorrador(claveBorrador(seccion))
       .catch(() => null)
@@ -79,7 +80,7 @@ export default function FormularioPunto() {
         setRestaurado(true);
       });
     return () => { vigente = false; };
-  }, [sidebar3Abierto, seccionNuevoPunto, puntoEnEdicionId]);
+  }, [sidebar3Abierto, seccionUnica, puntoEnEdicionId]);
 
   useEffect(() => {
     if (!restaurado) return;
@@ -98,7 +99,6 @@ export default function FormularioPunto() {
     return () => clearTimeout(temporizador);
   }, [form, restaurado]);
 
-  const opcionesSeccion = SECCIONES_DOCUMENTO.map((s) => ({ id: s.id, label: s.nombre }));
   const seccionActual = SECCIONES_DOCUMENTO.find((s) => s.id === form.seccion);
   const esInforme = seccionActual ? !seccionActual.requiereAcuerdo : false;
   const remitenteActual = REMITENTES.some((r) => r.id === form.remitente) ? form.remitente : (REMITENTES[0]?.id || '');
@@ -179,17 +179,8 @@ export default function FormularioPunto() {
 
   return (
     <div className="widget-formulario-punto-wrap">
-      <div className="widget-formulario-punto" key={form.seccion} ref={contenedorRef} onScroll={onScroll}>
+      <div className="widget-formulario-punto" ref={contenedorRef} onScroll={onScroll}>
       <div className="widget-formulario-punto-fila">
-        <div className="widget-formulario-punto-campo">
-          <label className="widget-formulario-punto-label">Sección</label>
-          <ListaExpandible
-            valorActual={form.seccion}
-            etiquetaActual={seccionActual ? seccionActual.nombre : ''}
-            opciones={opcionesSeccion}
-            onSeleccionar={(id) => actualizar('seccion', id)}
-          />
-        </div>
         <div className="widget-formulario-punto-campo">
           <label className="widget-formulario-punto-label">Remitente</label>
           <ListaExpandible
@@ -241,11 +232,11 @@ export default function FormularioPunto() {
       )}
 
       <div className="widget-formulario-punto-campo">
-        <label className="widget-formulario-punto-label">{esInforme ? 'Informe' : 'Punto de acuerdo'}</label>
+        <label className="widget-formulario-punto-label">{esInforme ? 'Asunto' : 'Punto de acuerdo'}</label>
         <Textarea
           value={form.contenido}
           onChange={(v) => actualizar('contenido', v)}
-          placeholder={esInforme ? 'Informe' : '...por el que/cual se...'}
+          placeholder={esInforme ? 'Asunto' : '...por el que/cual se...'}
         />
       </div>
 

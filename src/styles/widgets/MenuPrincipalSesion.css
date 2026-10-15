@@ -1,0 +1,12 @@
+.widget-menu-principal-sesion .base-boton-seleccionable-menu:hover .base-boton-agregar {
+  width: 18px;
+  margin-left: 4px;
+  opacity: 1;
+}
+@media (hover: none) {
+  .widget-menu-principal-sesion .base-boton-agregar {
+    width: 18px;
+    margin-left: 4px;
+    opacity: 1;
+  }
+}

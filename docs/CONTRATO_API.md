@@ -42,6 +42,9 @@ Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas p
 | `tratado` | bool | Marca de la celebración: el punto ya se trató. Empieza en `false`; los puntos anteriores al campo se leen como `false`. Solo cambia con `marcarPunto`. |
 | `version` | int | |
 | `creadoPor`, `creadoEn`, `modificadoEn` | string | Autoría y fechas, del servidor. |
+| `fijo` | bool | **Derivado.** `true` solo en los puntos fijos (ver "Puntos fijos"). |
+| `clave` | string | **Derivado.** Solo en puntos fijos: su `id` en el catálogo `puntosFijos` (`orden-dia`, `acta-anterior`, `asuntos-generales`). |
+| `encabezado` | bool | **Derivado.** Solo en puntos fijos que son un título de cierre (no se tratan ni se marcan). |
 
 ### Archivo
 | Campo | Tipo | Notas |
@@ -64,6 +67,19 @@ Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas p
 - Si `editarPunto` cambia la `seccion` de un punto, queda **al final** de la nueva sección.
 - Los puntos creados antes de existir `orden` reciben uno al actualizar la base, según su fecha de creación.
 
+### Puntos fijos
+
+Los define el catálogo `puntosFijos`; el servidor **los genera al leer** (`listarPuntos`, `marcarPunto`, `marcarPuntos`): nunca existen como registros de puntos. En este proyecto, el orden de cada sesión es:
+
+1. `orden-dia` — "Aprobación, en su caso, del orden del día." (siempre).
+2. `acta-anterior` — "Aprobación, en su caso, del acta de la sesión del {fecha}." Solo si existe una sesión **celebrada** con fecha anterior; `{fecha}` es la de la más reciente de ellas, con el formato "4 de octubre de 2026".
+3. Los puntos registrados, por `orden`.
+4. `asuntos-generales` — "Asuntos generales." (siempre, al final). Es `encabezado`: un título de cierre, no un punto a tratar.
+
+- Su `id` es `fijo:<sesionId>:<clave>`; `contenido` es el texto; `remitente` es `null`; `archivos` es `[]`; `confidencial` es `false`; `seccion` es la primera del catálogo.
+- **No se pueden editar, eliminar, mover ni adjuntarles archivos** (`VALIDACION`). `reordenarPuntos` recibe solo los ids de los puntos registrados.
+- Los que no son `encabezado` se marcan como cualquier punto (`marcarPunto` con su `id`, y `marcarPuntos`); la marca se guarda en la sesión (`fijosTratados`) y empieza en `false`. Un `encabezado` siempre tiene `tratado: false` y `marcarPunto` lo rechaza (`VALIDACION`).
+
 ### Catálogos
 
 Los catálogos de dominio son **datos, no código**: el API ofrece un mecanismo genérico y cada proyecto carga sus propias filas (semilla). El API valida contra lo que haya cargado y aplica los atributos sin saber qué significan. Así el motor es reutilizable entre proyectos.
@@ -72,7 +88,8 @@ Los catálogos de dominio son **datos, no código**: el API ofrece un mecanismo 
 
 | Catálogo | Atributos | Valores actuales |
 |---|---|---|
-| `secciones` | `requiereAcuerdo: bool` | `informes` (false), `dictamenes`, `acuerdos`, `asuntos generales` (true) |
+| `secciones` | `requiereAcuerdo: bool` | `asuntos` (false): en este proyecto los puntos no se clasifican |
+| `puntosFijos` | `texto`, `posicion` (`inicio`/`final`), `condicion` (`siempre`/`sesionAnteriorCelebrada`), `encabezado: bool` | `orden-dia`, `acta-anterior`, `asuntos-generales` (ver "Puntos fijos") |
 | `remitentes` | — | `pleno`, `presidencia`, `secretaria-general` |
 
 Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interfaz (menú, textos, íconos).
@@ -125,6 +142,7 @@ Notas de comportamiento:
 | `CONFLICTO` | `version` desactualizada. |
 | `SESION_CELEBRADA` | La operación no aplica a una sesión ya celebrada. |
 | `ARCHIVO_INVALIDO` | Archivo con tipo no permitido, que excede el tamaño (100 MB) o que supera el máximo por punto (30). |
+| `NO_DISPONIBLE` | El servidor no puede atender la operación en este momento (en `LocalAPI`: la base está bloqueada por otra pestaña con una versión anterior). Se puede reintentar. |
 | `NO_IMPLEMENTADO` | Solo `ServerConnection` mientras no exista backend. |
 
 ## Permisos

@@ -17,10 +17,7 @@ export function UIProvider({ children }) {
   const [mostrarFormularioCalendario, setMostrarFormularioCalendario] = useState(true);
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
   const [vistaActual, setVistaActual] = useState('inicio');
-  const [acordeonAbierto, setAcordeonAbierto] = useState(false);
-  const [seccionNuevoPunto, setSeccionNuevoPunto] = useState(null);
   const [puntoEnEdicionId, setPuntoEnEdicionId] = useState(null);
-  const [seccionActivaProyecto, setSeccionActivaProyecto] = useState(null);
   const [puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId] = useState(null);
   const izquierdaSidebar1 = 0;
   const izquierdaSidebar3 = izquierdaSidebar1 + ANCHO_SIDEBAR1;
@@ -51,10 +48,7 @@ export function UIProvider({ children }) {
     mostrarFormularioCalendario, setMostrarFormularioCalendario,
     terminoBusqueda, setTerminoBusqueda,
     vistaActual, setVistaActual,
-    acordeonAbierto, setAcordeonAbierto,
-    seccionNuevoPunto, setSeccionNuevoPunto,
     puntoEnEdicionId, setPuntoEnEdicionId, abrirEdicionPunto,
-    seccionActivaProyecto, setSeccionActivaProyecto,
     puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId,
     izquierdaSidebar1, izquierdaSidebar3,
   };
