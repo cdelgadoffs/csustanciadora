@@ -2,7 +2,7 @@ import BotonSeleccionableMenu from '../base/BotonSeleccionableMenu.jsx';
 import BotonAgregar from '../base/BotonAgregar.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
-import { contarPuntos } from '../../utils/puntos.js';
+import { contarPuntos, puntoCoincide } from '../../utils/puntos.js';
 import '../../styles/widgets/MenuPrincipalSesion.css';
 
 const VISTAS_MENU_PRINCIPAL = [
@@ -14,7 +14,7 @@ const VISTAS_MENU_PRINCIPAL = [
 
 export default function MenuPrincipalSesion() {
   const { PUNTOS, sesionFinalizada, listaCerrada } = useProyecto();
-  const { vistaActual, setVistaActual, setSidebar3Abierto, setPuntoEnEdicionId } = useUI();
+  const { vistaActual, setVistaActual, setSidebar3Abierto, setPuntoEnEdicionId, terminoBusqueda } = useUI();
 
   function agregarPunto() {
     setPuntoEnEdicionId(null);
@@ -31,7 +31,7 @@ export default function MenuPrincipalSesion() {
             key={v.id}
             activo={activo}
             deshabilitado={v.requiereListaCerrada && !listaCerrada && !activo}
-            badge={v.mostrarTotalPuntos ? contarPuntos(PUNTOS) : undefined}
+            badge={v.mostrarTotalPuntos ? contarPuntos(PUNTOS.filter((p) => puntoCoincide(p, terminoBusqueda))) : undefined}
             accion={v.agregarPunto && activo && !listaCerrada && (
               <BotonAgregar onClick={agregarPunto}>+</BotonAgregar>
             )}

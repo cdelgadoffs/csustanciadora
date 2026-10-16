@@ -14,7 +14,6 @@ export default function Historial() {
     izquierdaSidebar1, izquierdaSidebar3,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
-    terminoBusqueda, setTerminoBusqueda,
   } = useUI();
   const { sesionSeleccionada } = useProyecto();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
@@ -22,10 +21,7 @@ export default function Historial() {
 
   return (
     <>
-      <Topbar
-        terminoBusqueda={terminoBusqueda}
-        onCambiarBusqueda={setTerminoBusqueda}
-      />
+      <Topbar />
       <Sidebar1
         izquierda={izquierdaSidebar1}
         titulo={sesionActual.titulo}

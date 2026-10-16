@@ -23,7 +23,6 @@ export default function Sesion() {
     izquierdaSidebar1,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
-    terminoBusqueda, setTerminoBusqueda,
   } = useUI();
   const { sesionSeleccionada, sesionFinalizada } = useProyecto();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
@@ -32,10 +31,7 @@ export default function Sesion() {
 
   return (
     <>
-      <Topbar
-        terminoBusqueda={terminoBusqueda}
-        onCambiarBusqueda={setTerminoBusqueda}
-      />
+      <Topbar />
       <Sidebar1
         izquierda={izquierdaSidebar1}
         ancho={ANCHO_SIDEBAR1_SESION}

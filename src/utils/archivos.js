@@ -23,3 +23,21 @@ export function guardarEnDisco(nombre, blob) {
   enlace.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+const EXTENSIONES_IMAGEN = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
+const MIME_DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+export function tipoDeVistaPrevia(nombre, tipo = '') {
+  const extension = String(nombre).split('.').pop().toLowerCase();
+  if (tipo === MIME_DOCX || extension === 'docx') return 'word';
+  if (tipo.startsWith('image/') || EXTENSIONES_IMAGEN.includes(extension)) return 'imagen';
+  if (tipo === 'application/pdf' || extension === 'pdf') return 'pdf';
+  if (tipo.startsWith('text/')) return 'texto';
+  return null;
+}
+
+export function formatoTamano(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}

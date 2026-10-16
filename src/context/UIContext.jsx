@@ -5,6 +5,7 @@ export const ANCHO_SIDEBAR2 = 250;
 export const ANCHO_SIDEBAR3 = 500;
 export const ALTO_TOPBAR = 52;
 export const ALTO_CINTA = 50;
+export const ANCHO_SIDEBAR4 = 320;
 
 const UIContext = createContext(null);
 
@@ -16,9 +17,12 @@ export function UIProvider({ children }) {
   const [panelControlActivo, setPanelControlActivo] = useState(null);
   const [mostrarFormularioCalendario, setMostrarFormularioCalendario] = useState(true);
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
-  const [vistaActual, setVistaActual] = useState('inicio');
+  const [vistaActual, setVistaActualEstado] = useState('inicio');
   const [puntoEnEdicionId, setPuntoEnEdicionId] = useState(null);
   const [puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId] = useState(null);
+  const [archivoEnVista, setArchivoEnVista] = useState(null);
+  const [elementoNavegador, setElementoNavegador] = useState(null);
+  const [puntoDestinoProyecto, setPuntoDestinoProyecto] = useState(null);
   const izquierdaSidebar1 = 0;
   const izquierdaSidebar3 = izquierdaSidebar1 + ANCHO_SIDEBAR1;
 
@@ -33,6 +37,23 @@ export function UIProvider({ children }) {
   function cerrarSidebar3() {
     setSidebar3Abierto(false);
     setPuntoEnEdicionId(null);
+  }
+  function setVistaActual(vista) {
+    setVistaActualEstado(vista);
+    setElementoNavegador(null);
+    setArchivoEnVista(null);
+    if (vista !== 'proyecto') setPuntoDestinoProyecto(null);
+  }
+  function irAPunto(puntoId) {
+    setPuntoDestinoProyecto(puntoId);
+    setTerminoBusqueda('');
+    setVistaActual('proyecto');
+  }
+  function abrirVistaArchivo(archivo) {
+    setArchivoEnVista({ id: archivo.id, nombre: archivo.nombre, tipo: archivo.tipo });
+  }
+  function cerrarVistaArchivo() {
+    setArchivoEnVista(null);
   }
   function cerrarSidebar5() {
     setSidebar5Abierto(false);
@@ -50,6 +71,9 @@ export function UIProvider({ children }) {
     vistaActual, setVistaActual,
     puntoEnEdicionId, setPuntoEnEdicionId, abrirEdicionPunto,
     puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId,
+    archivoEnVista, abrirVistaArchivo, cerrarVistaArchivo,
+    elementoNavegador, setElementoNavegador,
+    puntoDestinoProyecto, irAPunto,
     izquierdaSidebar1, izquierdaSidebar3,
   };
 

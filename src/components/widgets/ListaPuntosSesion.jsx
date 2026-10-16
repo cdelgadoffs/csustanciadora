@@ -9,7 +9,8 @@ import '../../styles/widgets/ListaPuntosSesion.css';
 
 export default function ListaPuntosSesion() {
   const { PUNTOS, SECCIONES_DOCUMENTO, sesionFinalizada, marcarPunto, cargando, error } = useProyecto();
-  const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId } = useUI();
+  const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId, terminoBusqueda } = useUI();
+  const termino = terminoBusqueda.trim();
   const [errorAccion, setErrorAccion] = useState(null);
   const [guardandoId, setGuardandoId] = useState(null);
 
@@ -26,12 +27,12 @@ export default function ListaPuntosSesion() {
     }
   }
 
-  const items = puntosOrdenados(PUNTOS, SECCIONES_DOCUMENTO);
+  const items = puntosOrdenados(PUNTOS, SECCIONES_DOCUMENTO, termino);
   const activoId = puntoActivo(items, puntoSesionSeleccionadoId)?.punto.id;
 
   const aviso = error ? `No se pudo cargar la información: ${error.mensaje}` : errorAccion;
   const vacio = items.length === 0
-    ? (cargando ? 'Cargando…' : error ? null : 'Esta sesión no tiene puntos.')
+    ? (cargando ? 'Cargando…' : error ? null : termino ? `Sin coincidencias para «${termino}».` : 'Esta sesión no tiene puntos.')
     : null;
 
   return (
@@ -40,6 +41,9 @@ export default function ListaPuntosSesion() {
         <div className="widget-lista-puntos-sesion-contenido">
           {aviso && <div className="widget-lista-puntos-sesion-error">{aviso}</div>}
           {vacio && <div className="widget-lista-puntos-sesion-vacio">{vacio}</div>}
+          {termino && items.length > 0 && (
+            <div className="widget-lista-puntos-sesion-vacio">{items.length} {items.length === 1 ? 'coincidencia' : 'coincidencias'} para «{termino}»</div>
+          )}
           {items.map(({ punto, titulo }) => (
             <BotonSeleccionableMenu
               key={punto.id}

@@ -21,7 +21,6 @@ export default function ProyectoOrdenDia() {
     sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
-    terminoBusqueda, setTerminoBusqueda,
   } = useUI();
   const { sesionSeleccionada, sesionFinalizada, listaCerrada } = useProyecto();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
@@ -31,10 +30,7 @@ export default function ProyectoOrdenDia() {
 
   return (
     <>
-      <Topbar
-        terminoBusqueda={terminoBusqueda}
-        onCambiarBusqueda={setTerminoBusqueda}
-      />
+      <Topbar />
       <CintaSesiones textoVacio="Aún no hay sesiones programadas." />
       <Sidebar1
         izquierda={izquierdaSidebar1}

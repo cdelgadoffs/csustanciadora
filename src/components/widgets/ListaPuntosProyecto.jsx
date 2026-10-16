@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Card from '../base/Card.jsx';
 import IndicadorSync from '../base/IndicadorSync.jsx';
 import BadgeDinamico from '../base/BadgeDinamico.jsx';
@@ -6,7 +6,8 @@ import OpcionesAUD from './OpcionesAUD.jsx';
 import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { estiloArchivo, guardarEnDisco } from '../../utils/archivos.js';
-import { puntosNumerados } from '../../utils/puntos.js';
+import { puntosNumerados, puntoCoincide } from '../../utils/puntos.js';
+import { useUI } from '../../context/UIContext.jsx';
 import '../../styles/widgets/ListaPuntosProyecto.css';
 
 function seleccionarSiNoEsControl(e, seleccionar) {
@@ -17,7 +18,7 @@ function seleccionarSiNoEsControl(e, seleccionar) {
 function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opciones, onDescargar, seleccionada, onSeleccionar }) {
   const esInforme = !requiereAcuerdo;
   return (
-    <div className={'widget-lista-puntos-item' + (seleccionada ? ' widget-lista-puntos-item-seleccionado' : '')}>
+    <div id={`punto-${punto.id}`} className={'widget-lista-puntos-item' + (seleccionada ? ' widget-lista-puntos-item-seleccionado' : '')}>
       <Card onClick={(e) => seleccionarSiNoEsControl(e, onSeleccionar)}>
         <div className="widget-lista-puntos-header">
           <span className={'widget-lista-puntos-titulo' + (punto.confidencial ? ' widget-lista-puntos-titulo-confidencial' : '')}>
@@ -60,7 +61,7 @@ function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opcione
   );
 }
 
-function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones, onDescargar, seleccionadoId, seleccionar) {
+function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones, onDescargar, seleccionadoId, seleccionar, termino) {
   const deLaSeccion = puntos.filter((p) => p.seccion === seccion.id);
   if (deLaSeccion.length === 0) {
     if (estadoCarga === 'error') return null;
@@ -72,7 +73,11 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
     <div key="vacio" className="widget-lista-puntos-vacio">Sin asuntos registrados.</div>
   );
   const numeros = new Map(puntosNumerados(puntos).map(({ punto, titulo }) => [punto.id, titulo]));
-  const elementos = deLaSeccion.map((p) => {
+  const visibles = termino ? deLaSeccion.filter((p) => !p.encabezado && puntoCoincide(p, termino)) : deLaSeccion;
+  if (termino && visibles.length === 0) {
+    return <div className="widget-lista-puntos-vacio">Sin coincidencias para «{termino}».</div>;
+  }
+  const elementos = visibles.map((p) => {
     if (p.encabezado) {
       return <div key={p.id} className="widget-lista-puntos-encabezado">{numeros.get(p.id)}</div>;
     }
@@ -91,8 +96,8 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
       />
     );
   });
-  const indiceCierre = deLaSeccion.findIndex((p) => p.encabezado);
-  if (vacio) elementos.splice(indiceCierre === -1 ? elementos.length : indiceCierre, 0, vacio);
+  const indiceCierre = visibles.findIndex((p) => p.encabezado);
+  if (vacio && !termino) elementos.splice(indiceCierre === -1 ? elementos.length : indiceCierre, 0, vacio);
   return elementos;
 }
 
@@ -100,8 +105,18 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   const { PUNTOS: puntos, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, descargarArchivo, reordenarPuntos, cargando, error } = useProyecto();
   const [errorAccion, setErrorAccion] = useState(null);
   const [moviendo, setMoviendo] = useState(false);
-  const [seleccionadoId, setSeleccionadoId] = useState(null);
+  const { terminoBusqueda, puntoDestinoProyecto } = useUI();
+  const [seleccionadoId, setSeleccionadoId] = useState(puntoDestinoProyecto);
+  const destinoDesplazado = useRef(null);
   const seleccionar = setSeleccionadoId;
+
+  useEffect(() => {
+    if (!puntoDestinoProyecto || destinoDesplazado.current === puntoDestinoProyecto) return;
+    const tarjeta = document.getElementById(`punto-${puntoDestinoProyecto}`);
+    if (!tarjeta) return;
+    destinoDesplazado.current = puntoDestinoProyecto;
+    tarjeta.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [puntoDestinoProyecto, puntos]);
   const estadoCarga = error ? 'error' : cargando ? 'cargando' : 'listo';
   const avisoError = (error || errorAccion) && (
     <div className="widget-lista-puntos-error">
@@ -131,7 +146,12 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
       setMoviendo(false);
     }
   }
-  const ocultas = listaCerrada ? [...opcionesOcultas, 'mover', 'editar', 'eliminar'] : opcionesOcultas;
+  const termino = terminoBusqueda.trim();
+  const ocultas = [
+    ...opcionesOcultas,
+    ...(listaCerrada ? ['mover', 'editar', 'eliminar'] : []),
+    ...(termino ? ['mover'] : []),
+  ];
   const renderOpciones = (punto, indice, deLaSeccion, seccionId) => (sesionFinalizada ? null : (
     <>
       {deLaSeccion.length > 1 && !ocultas.includes('mover') && (
@@ -156,7 +176,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   return (
     <div className="widget-lista-puntos-proyecto">
       {avisoError}
-      {seccion ? listaDeSeccion(puntos, seccion, REMITENTES, estadoCarga, renderOpciones, descargar, seleccionadoId, seleccionar) : (
+      {seccion ? listaDeSeccion(puntos, seccion, REMITENTES, estadoCarga, renderOpciones, descargar, seleccionadoId, seleccionar, termino) : (
         estadoCarga === 'listo' && <div className="widget-lista-puntos-vacio">Sin secciones definidas.</div>
       )}
       {!seccion && estadoCarga === 'cargando' && <div className="widget-lista-puntos-vacio">Cargando…</div>}

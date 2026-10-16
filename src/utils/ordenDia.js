@@ -23,6 +23,14 @@ function fechaEnLetras(fecha) {
   return `${dia} DE ${MESES[fecha.getMonth()].toUpperCase()} DE ${fecha.getFullYear()}`;
 }
 
+function tituloOrdenDia(sesion) {
+  return sesion.numeroSesion ? `REUNIÓN NÚMERO ${sesion.numeroSesion}` : 'PROYECTO DEL ORDEN DEL DÍA';
+}
+
+export function nombreArchivoOrdenDia(sesion) {
+  return `Orden del dia - ${tituloOrdenDia(sesion)}.docx`;
+}
+
 export async function generarWordOrdenDia({ sesion, puntos }) {
   const { Document, Packer, Paragraph, TextRun, AlignmentType, UnderlineType } = await import('docx');
 
@@ -37,7 +45,7 @@ export async function generarWordOrdenDia({ sesion, puntos }) {
 
   const fecha = new Date(sesion.id + 'T00:00:00');
   const fechaConDia = `${DIAS_SEMANA[fecha.getDay()]} ${fechaEnLetras(fecha)}`;
-  const tituloBase = sesion.numeroSesion ? `REUNIÓN NÚMERO ${sesion.numeroSesion}` : 'PROYECTO DEL ORDEN DEL DÍA';
+  const tituloBase = tituloOrdenDia(sesion);
 
   const parrafos = [
     centrado(aplicarEspaciadoTexto(tituloBase), { before: 200, after: 200 }),
@@ -75,5 +83,5 @@ export async function generarWordOrdenDia({ sesion, puntos }) {
     }],
   });
 
-  return { blob: await Packer.toBlob(documento), nombreArchivo: `Orden del dia - ${tituloBase}.docx` };
+  return { blob: await Packer.toBlob(documento), nombreArchivo: nombreArchivoOrdenDia(sesion) };
 }
