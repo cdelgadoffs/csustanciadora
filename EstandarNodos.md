@@ -110,6 +110,8 @@ Un estándar con excepciones deja de ser verificable: la regla manda sobre la co
 - Constantes y funciones **estáticas, reutilizables y sin estado**, sin JSX y sin React (ej. nombres de meses, formateo de fechas).
 - **No se duplica el mismo dato/función en dos archivos.** Si dos capas lo necesitan, se extrae una sola vez a `utils/`; nunca se decide "cuál es el dueño".
 - Lo importan `context/` y `widgets/`. `base/` **no** (si un `base` necesitara algo de `utils/`, se le pasa por props o ese componente es en realidad un widget).
+- **Generación de documentos (Word, PDF, zip) — decidido (antes pendiente 14.2, opción A):** si el documento se arma con datos que el cliente ya tiene, es un **constructor puro en `utils/`** (datos entran, `Blob` sale; sin React, sin estado, sin I/O; la librería se carga con `import()` dinámico) y un widget lo invoca con datos del contexto y descarga el resultado. Si el documento es **oficial** (se guarda, se adjunta, se envía o se audita) o necesita datos que solo el servidor conoce, lo genera **el API** (operación del contrato) y el cliente solo lo descarga. No se usa un servicio del cliente para esto.
+- **El servidor simulado no importa `utils/`:** `LocalAPI` se borra al conectar y no puede depender del código del cliente; cuando necesita formatear algo usa lo que ofrece la plataforma (ej. `Intl.DateTimeFormat` para fechas) en lugar de copiar datos de referencia del cliente.
 
 ## 9. Arquitectura de datos: cliente / API intercambiable
 
@@ -205,10 +207,7 @@ Huecos que un proyecto con identidad, documentos e integraciones va a tocar. Cad
 - **Recomendación: A.** Un hook que lee contexto no es puro y no va en `hooks/`; y los permisos son del API.
 
 ### 14.2 Generación de documentos (Word, PDF, zip)
-- **A.** Constructores puros en `utils/` (datos entran, `Blob` sale; sin React, sin estado, sin I/O); un widget los invoca con datos del contexto y descarga el resultado.
-- **B.** Un servicio del cliente que llama el contexto (`services/Documentos.js`).
-- **C.** El API genera el documento (operación del contrato) y el cliente solo lo descarga.
-- **Recomendación: A** para documentos que se arman con datos que el cliente ya tiene; **C** si el documento es oficial o necesita datos que solo el servidor conoce.
+- **Decidido: opción A** con paso a C para documentos oficiales. Movido a la sección 8 (`utils/`).
 
 ### 14.3 Integraciones externas (correo, almacenamiento en la nube)
 - **A.** Siempre detrás del API: el backend habla con el tercero y el cliente solo ve operaciones del contrato; `LocalAPI` las simula.

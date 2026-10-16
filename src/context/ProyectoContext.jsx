@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import {
   listarCatalogos, listarSesiones, crearSesiones, celebrarSesion,
   establecerListaCerrada as establecerListaCerradaEnApi,
+  comenzarSesion as comenzarSesionEnApi, editarHorario as editarHorarioEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi,
   guardarDeliberacion as guardarDeliberacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
@@ -118,6 +119,14 @@ export function ProyectoProvider({ children }) {
   function cargarSesion(fecha) {
     setSesionActivaFecha(fecha);
   }
+  async function comenzarSesion() {
+    await comenzarSesionEnApi(sesionActivaFecha);
+    aplicarSesiones(await listarSesiones());
+  }
+  async function editarHorario(cambios) {
+    await editarHorarioEnApi(sesionActivaFecha, cambios);
+    aplicarSesiones(await listarSesiones());
+  }
   async function finalizarSesion() {
     await celebrarSesion(sesionActivaFecha);
     aplicarSesiones(await listarSesiones());
@@ -194,7 +203,7 @@ export function ProyectoProvider({ children }) {
     SECCIONES_DOCUMENTO: catalogos.secciones, REMITENTES: catalogos.remitentes,
     FECHAS_SESIONES: fechasSesiones,
     sesionActivaFecha, cargarSesion,
-    sesionFinalizada, finalizarSesion,
+    sesionFinalizada, comenzarSesion, finalizarSesion, editarHorario,
     listaCerrada, establecerListaCerrada,
     PUNTOS: puntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, marcarTodosPuntos, guardarDeliberacion, adjuntarArchivos, eliminarArchivo, descargarArchivo,

@@ -12,6 +12,8 @@ export const listarPuntos = () => noImplementado();
 export const crearPunto = () => noImplementado();
 export const editarPunto = () => noImplementado();
 export const establecerListaCerrada = () => noImplementado();
+export const comenzarSesion = () => noImplementado();
+export const editarHorario = () => noImplementado();
 export const guardarDeliberacion = () => noImplementado();
 export const eliminarPunto = () => noImplementado();
 export const reordenarPuntos = () => noImplementado();

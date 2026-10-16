@@ -56,6 +56,9 @@ export function calcularEstados(sesiones) {
       estado,
       celebrada: !!s.celebrada,
       listaCerrada: !!s.listaCerrada,
+      horaInicio: s.horaInicio || null,
+      horaFin: s.horaFin || null,
+      enCurso: !!s.horaInicio && !s.celebrada,
       celebradaEn: s.celebradaEn || null,
       version: s.version,
     };
@@ -132,11 +135,10 @@ export function normalizarPunto(p, catalogos) {
   };
 }
 
-const MESES_TEXTO = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const FORMATO_FECHA = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 function fechaEnTexto(iso) {
-  const [y, m, d] = iso.split('-').map(Number);
-  return `${d} de ${MESES_TEXTO[m - 1]} de ${y}`;
+  return FORMATO_FECHA.format(new Date(`${iso}T00:00:00Z`));
 }
 
 export function esPuntoFijo(id) {
@@ -181,4 +183,17 @@ export function generarPuntosFijos(sesion, sesiones, catalogos) {
 export function validarDeliberacion(texto) {
   if (typeof texto !== 'string') throw new ApiError('VALIDACION', 'La deliberación debe ser texto.');
   if (texto.length > MAX_TEXTO) throw new ApiError('VALIDACION', 'La deliberación es demasiado larga.');
+}
+
+export function validarHoraDelDia(texto) {
+  if (typeof texto !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(texto)) {
+    throw new ApiError('VALIDACION', 'La hora debe tener el formato HH:MM (de 00:00 a 23:59).');
+  }
+}
+
+export function conHoraDelDia(iso, hhmm) {
+  const fecha = new Date(iso);
+  const [h, m] = hhmm.split(':').map(Number);
+  fecha.setHours(h, m, 0, 0);
+  return fecha.toISOString();
 }

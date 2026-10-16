@@ -4,3 +4,7 @@ export function etiquetaFecha(id) {
   const fecha = new Date(id + 'T00:00:00');
   return `${fecha.getDate()} de ${MESES[fecha.getMonth()]}`;
 }
+
+export function horaDeISO(iso) {
+  return new Date(iso).toTimeString().slice(0, 5);
+}
