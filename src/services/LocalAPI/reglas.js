@@ -55,6 +55,7 @@ export function calcularEstados(sesiones) {
       numeroSesion: consecutivo,
       estado,
       celebrada: !!s.celebrada,
+      listaCerrada: !!s.listaCerrada,
       celebradaEn: s.celebradaEn || null,
       version: s.version,
     };

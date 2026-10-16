@@ -21,6 +21,7 @@ Todas las operaciones son asíncronas. Los datos viajan como JSON. Los errores t
 | `numeroSesion` | int | Derivado. Consecutivo oficial. Avanza en `celebrada` y `proxima`; una `no-celebrada` no consume número. |
 | `estado` | string | Derivado. `celebrada` · `proxima` · `no-celebrada` · `pendiente`. |
 | `celebrada` | bool | Hecho persistido. |
+| `listaCerrada` | bool | Hecho persistido. `false` por omisión (las sesiones anteriores al campo se leen como `false`). Ver "Lista cerrada". |
 | `celebradaEn` | string \| null | Timestamp. |
 | `version` | int | |
 
@@ -68,6 +69,10 @@ Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas p
 - Si `editarPunto` cambia la `seccion` de un punto, queda **al final** de la nueva sección.
 - Los puntos creados antes de existir `orden` reciben uno al actualizar la base, según su fecha de creación.
 
+### Lista cerrada
+
+Con `Sesion.listaCerrada = true` la lista de puntos queda **bloqueada por completo**: `crearPunto`, `editarPunto`, `eliminarPunto` y `reordenarPuntos` responden `LISTA_CERRADA`. Siguen permitidos `adjuntarArchivos`, `eliminarArchivo`, `marcarPunto`, `marcarPuntos` y `guardarDeliberacion`. Una sesión no se puede celebrar con la lista abierta (`LISTA_ABIERTA`).
+
 ### Puntos fijos
 
 Los define el catálogo `puntosFijos`; el servidor **los genera al leer** (`listarPuntos`, `marcarPunto`, `marcarPuntos`): nunca existen como registros de puntos. En este proyecto, el orden de cada sesión es:
@@ -102,7 +107,8 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 | `listarCatalogos()` | — | `{ secciones: Item[], remitentes: Item[] }` | — |
 | `listarSesiones()` | — | `Sesion[]` (con derivados, ordenadas por `id`) | — |
 | `crearSesiones(fechas)` | `string[]` de fechas `YYYY-MM-DD` | `Sesion[]` (la lista completa actualizada) | `NO_AUTORIZADO`, `VALIDACION` |
-| `celebrarSesion(id)` | id de sesión | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
+| `celebrarSesion(id)` | id de sesión | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `LISTA_ABIERTA` |
+| `establecerListaCerrada(id, cerrada)` | id de sesión + bool | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `listarPuntos(sesionId)` | id de sesión | `Punto[]` (ordenados por `orden`, **ya filtrados según el usuario**) | — |
 | `crearPunto(sesionId, datos)` | sesión + `{ seccion, remitente, contenido, acuerdo, confidencial, archivos }` | `Punto` creado | `NO_AUTORIZADO`, `VALIDACION`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
 | `editarPunto(id, version, cambios)` | id, `version` que el cliente tiene, campos a cambiar | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `CONFLICTO`, `VALIDACION` |
@@ -131,6 +137,8 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 
 Notas de comportamiento:
 - `crearSesiones` es **idempotente**: las fechas que ya existen se ignoran (no resetea `celebrada`); devuelve siempre la lista completa porque los derivados de las demás sesiones pueden cambiar.
+- `celebrarSesion` exige la lista cerrada (`LISTA_ABIERTA`).
+- `establecerListaCerrada` es idempotente (repetir el mismo valor no cambia nada ni sube `version`); `VALIDACION` si `cerrada` no es booleano.
 - `celebrarSesion` devuelve solo la sesión celebrada; como `proxima` y `numeroSesion` de las demás pueden cambiar, el cliente vuelve a llamar `listarSesiones`.
 - `editarPunto` con `version` distinta de la actual → `CONFLICTO` (el cliente debe recargar). Solo se modifican los campos permitidos del punto; el resultado se valida completo.
 - Una sesión **celebrada es inmutable**: no admite crear, editar ni eliminar puntos.
@@ -146,6 +154,8 @@ Notas de comportamiento:
 | `SESION_CELEBRADA` | La operación no aplica a una sesión ya celebrada. |
 | `ARCHIVO_INVALIDO` | Archivo con tipo no permitido, que excede el tamaño (100 MB) o que supera el máximo por punto (30). |
 | `NO_DISPONIBLE` | El servidor no puede atender la operación en este momento (en `LocalAPI`: la base está bloqueada por otra pestaña con una versión anterior). Se puede reintentar. |
+| `LISTA_CERRADA` | La lista de puntos de la sesión está cerrada y la operación la modificaría. |
+| `LISTA_ABIERTA` | La operación exige la lista cerrada (celebrar). |
 | `NO_IMPLEMENTADO` | Solo `ServerConnection` mientras no exista backend. |
 
 ## Permisos

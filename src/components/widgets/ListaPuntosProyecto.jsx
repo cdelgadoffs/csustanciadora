@@ -6,6 +6,7 @@ import OpcionesAUD from './OpcionesAUD.jsx';
 import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { estiloArchivo, guardarEnDisco } from '../../utils/archivos.js';
+import { puntosNumerados } from '../../utils/puntos.js';
 import '../../styles/widgets/ListaPuntosProyecto.css';
 
 function seleccionarSiNoEsControl(e, seleccionar) {
@@ -32,10 +33,6 @@ function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opcione
             )}
           </div>
         </div>
-        {!punto.fijo && (<div className="widget-lista-puntos-fila">
-          <span className="widget-lista-puntos-label">{esInforme ? 'Asunto' : 'Punto de acuerdo'}</span>
-          <div className="widget-lista-puntos-contenido">{punto.contenido || 'Sin contenido'}</div>
-        </div>)}
         {!esInforme && (
           <div className="widget-lista-puntos-fila">
             <span className="widget-lista-puntos-label">Acuerdo</span>
@@ -74,16 +71,17 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
   const vacio = registrados.length === 0 && estadoCarga === 'listo' && (
     <div key="vacio" className="widget-lista-puntos-vacio">Sin asuntos registrados.</div>
   );
+  const numeros = new Map(puntosNumerados(puntos).map(({ punto, titulo }) => [punto.id, titulo]));
   const elementos = deLaSeccion.map((p) => {
     if (p.encabezado) {
-      return <div key={p.id} className="widget-lista-puntos-encabezado">{p.contenido}</div>;
+      return <div key={p.id} className="widget-lista-puntos-encabezado">{numeros.get(p.id)}</div>;
     }
     const i = registrados.indexOf(p);
     return (
       <TarjetaPunto
         key={p.id}
         punto={p}
-        titulo={p.fijo ? p.contenido : `${seccion.nombre} ${i + 1}`}
+        titulo={numeros.get(p.id)}
         requiereAcuerdo={seccion.requiereAcuerdo}
         nombreRemitente={remitentes.find((r) => r.id === p.remitente)?.nombre ?? p.remitente}
         opciones={p.fijo ? null : renderOpciones(p, i, registrados, seccion.id)}
@@ -99,7 +97,7 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
 }
 
 export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtra }) {
-  const { PUNTOS: puntos, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, descargarArchivo, reordenarPuntos, cargando, error } = useProyecto();
+  const { PUNTOS: puntos, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, descargarArchivo, reordenarPuntos, cargando, error } = useProyecto();
   const [errorAccion, setErrorAccion] = useState(null);
   const [moviendo, setMoviendo] = useState(false);
   const [seleccionadoId, setSeleccionadoId] = useState(null);
@@ -133,9 +131,10 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
       setMoviendo(false);
     }
   }
+  const ocultas = listaCerrada ? [...opcionesOcultas, 'mover', 'editar', 'eliminar'] : opcionesOcultas;
   const renderOpciones = (punto, indice, deLaSeccion, seccionId) => (sesionFinalizada ? null : (
     <>
-      {deLaSeccion.length > 1 && !opcionesOcultas.includes('mover') && (
+      {deLaSeccion.length > 1 && !ocultas.includes('mover') && (
         <OpcionesNavegacion
           orientacion="vertical"
           onAnterior={() => mover(seccionId, deLaSeccion, indice, -1)}
@@ -146,7 +145,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
           etiquetaSiguiente="Bajar punto"
         />
       )}
-      <OpcionesAUD punto={punto} ocultar={opcionesOcultas}>
+      <OpcionesAUD punto={punto} ocultar={ocultas}>
         {opcionesExtra && opcionesExtra(punto)}
       </OpcionesAUD>
     </>

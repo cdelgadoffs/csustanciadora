@@ -1,14 +1,16 @@
+export function tituloPunto(numero, punto) {
+  return `${numero}. ${punto.contenido || 'Sin contenido'}`;
+}
+
+export function puntosNumerados(puntos) {
+  return puntos.map((punto, i) => ({ punto, numero: i + 1, titulo: tituloPunto(i + 1, punto) }));
+}
+
 export function puntosOrdenados(puntos, secciones) {
-  return secciones.flatMap((seccion) => {
-    let consecutivo = 0;
-    return puntos
-      .filter((p) => p.seccion === seccion.id && !p.encabezado)
-      .map((punto) => ({
-        punto,
-        seccion,
-        titulo: punto.fijo ? punto.contenido : `${seccion.nombre} ${++consecutivo}`,
-      }));
-  });
+  return puntosNumerados(puntos)
+    .filter(({ punto }) => !punto.encabezado)
+    .map((item) => ({ ...item, seccion: secciones.find((s) => s.id === item.punto.seccion) }))
+    .filter((item) => item.seccion);
 }
 
 export function puntoActivo(items, id) {

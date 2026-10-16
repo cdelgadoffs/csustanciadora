@@ -5,6 +5,8 @@ import Sidebar3 from '../components/base/Sidebar3.jsx';
 import Sidebar5 from '../components/base/Sidebar5.jsx';
 import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
+import BotonCerrarLista from '../components/widgets/BotonCerrarLista.jsx';
+import BotonDescargar from '../components/widgets/BotonDescargar.jsx';
 import FormularioPunto from '../components/widgets/FormularioPunto.jsx';
 import ListaPuntosProyecto from '../components/widgets/ListaPuntosProyecto.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/MenuPanelControl.jsx';
@@ -21,7 +23,7 @@ export default function ProyectoOrdenDia() {
     sidebar5Ancho,
     terminoBusqueda, setTerminoBusqueda,
   } = useUI();
-  const { sesionSeleccionada } = useProyecto();
+  const { sesionSeleccionada, sesionFinalizada, listaCerrada } = useProyecto();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const panelIzquierda = izquierdaSidebar3 + (sidebar3Abierto ? ANCHO_SIDEBAR3 : 0);
   const arriba = ALTO_TOPBAR + ALTO_CINTA;
@@ -39,6 +41,12 @@ export default function ProyectoOrdenDia() {
         arriba={arribaSidebar}
         titulo={sesionActual.titulo}
         subtitulo={sesionActual.subtitulo}
+        pie={sesionSeleccionada && !sesionFinalizada && !sidebar3Abierto ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <BotonCerrarLista />
+            {listaCerrada && <BotonDescargar />}
+          </div>
+        ) : null}
       >
         <MenuPrincipalSesion />
       </Sidebar1>

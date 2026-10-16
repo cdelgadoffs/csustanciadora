@@ -18,6 +18,12 @@ async function exigirSesionAbierta(sesionId) {
   return sesion;
 }
 
+async function exigirListaAbierta(sesionId) {
+  const sesion = await exigirSesionAbierta(sesionId);
+  if (sesion.listaCerrada) throw new ApiError('LISTA_CERRADA', 'La lista de puntos está cerrada. Ábrela para hacer cambios.');
+  return sesion;
+}
+
 function porOrden(a, b) {
   if (a.orden !== b.orden) return a.orden - b.orden;
   if (a.creadoEn !== b.creadoEn) return a.creadoEn < b.creadoEn ? -1 : 1;
@@ -58,6 +64,7 @@ export async function celebrarSesion(id) {
   const sesion = await obtener(STORE_SESIONES, id);
   if (!sesion) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
   if (sesion.celebrada) throw new ApiError('SESION_CELEBRADA', 'La sesión ya fue celebrada.');
+  if (!sesion.listaCerrada) throw new ApiError('LISTA_ABIERTA', 'Debes cerrar la lista de puntos antes de celebrar la sesión.');
   await guardar(STORE_SESIONES, {
     ...sesion, celebrada: true, celebradaEn: new Date().toISOString(), version: sesion.version + 1,
   });
@@ -69,6 +76,16 @@ function sinPosicion(punto) {
   const copia = { ...punto };
   delete copia.posicion;
   return copia;
+}
+
+export async function establecerListaCerrada(id, cerrada) {
+  exigirEscritura();
+  if (typeof cerrada !== 'boolean') throw new ApiError('VALIDACION', 'El valor de "cerrada" debe ser verdadero o falso.');
+  const sesion = await exigirSesionAbierta(id);
+  if (!!sesion.listaCerrada !== cerrada) {
+    await guardar(STORE_SESIONES, { ...sesion, listaCerrada: cerrada, version: sesion.version + 1 });
+  }
+  return (await listarSesiones()).find((s) => s.id === id);
 }
 
 export async function listarPuntos(sesionId) {
@@ -90,7 +107,7 @@ export async function listarPuntos(sesionId) {
 export async function crearPunto(sesionId, datos) {
   exigirEscritura();
   if (!sesionId) throw new ApiError('VALIDACION', 'Debes indicar la sesión del punto.');
-  await exigirSesionAbierta(sesionId);
+  await exigirListaAbierta(sesionId);
   const catalogos = await listarCatalogos();
   validarPunto(datos, catalogos);
   const archivos = Array.from(datos.archivos || []);
@@ -125,7 +142,7 @@ export async function editarPunto(id, version, cambios) {
   exigirNoFijo(id);
   const actual = await obtener(STORE_PUNTOS, id);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
-  await exigirSesionAbierta(actual.sesionId);
+  await exigirListaAbierta(actual.sesionId);
   if (actual.version !== version) {
     throw new ApiError('CONFLICTO', 'El punto cambió desde que lo cargaste. Recarga e intenta de nuevo.');
   }
@@ -209,7 +226,7 @@ export async function eliminarPunto(id) {
   exigirNoFijo(id);
   const actual = await obtener(STORE_PUNTOS, id);
   if (!actual) throw new ApiError('NO_ENCONTRADO', 'El punto no existe.');
-  await exigirSesionAbierta(actual.sesionId);
+  await exigirListaAbierta(actual.sesionId);
   await escribirVarios({
     borrar: [
       { store: STORE_PUNTOS, id },
@@ -275,7 +292,7 @@ export async function descargarArchivo(archivoId) {
 
 export async function reordenarPuntos(sesionId, seccion, ids) {
   exigirEscritura();
-  await exigirSesionAbierta(sesionId);
+  await exigirListaAbierta(sesionId);
   const catalogos = await listarCatalogos();
   if (!catalogos.secciones.some((s) => s.id === seccion)) throw new ApiError('VALIDACION', 'Sección inválida.');
   if (!Array.isArray(ids)) throw new ApiError('VALIDACION', 'El orden debe ser una lista de ids.');

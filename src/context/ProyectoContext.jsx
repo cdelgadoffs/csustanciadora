@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import {
   listarCatalogos, listarSesiones, crearSesiones, celebrarSesion,
+  establecerListaCerrada as establecerListaCerradaEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi,
   guardarDeliberacion as guardarDeliberacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
@@ -121,6 +122,10 @@ export function ProyectoProvider({ children }) {
     await celebrarSesion(sesionActivaFecha);
     aplicarSesiones(await listarSesiones());
   }
+  async function establecerListaCerrada(cerrada) {
+    await establecerListaCerradaEnApi(sesionActivaFecha, cerrada);
+    aplicarSesiones(await listarSesiones());
+  }
   function aplicarPuntos(lista) {
     setPuntos(lista);
     guardarCache(cachePuntos(sesionActivaFecha), lista);
@@ -182,6 +187,7 @@ export function ProyectoProvider({ children }) {
 
   const sesionSeleccionada = fechasSesiones.find((f) => f.id === sesionActivaFecha);
   const sesionFinalizada = !!sesionSeleccionada?.celebrada;
+  const listaCerrada = !!sesionSeleccionada?.listaCerrada;
 
   const value = {
     sesionSeleccionada,
@@ -189,6 +195,7 @@ export function ProyectoProvider({ children }) {
     FECHAS_SESIONES: fechasSesiones,
     sesionActivaFecha, cargarSesion,
     sesionFinalizada, finalizarSesion,
+    listaCerrada, establecerListaCerrada,
     PUNTOS: puntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, marcarTodosPuntos, guardarDeliberacion, adjuntarArchivos, eliminarArchivo, descargarArchivo,
     agregarSesiones,

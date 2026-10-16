@@ -5,6 +5,7 @@ import CalendarioMes from '../../components/base/CalendarioMes.jsx';
 import CardS from '../../components/base/CardS.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
+import { encabezadoSesion } from '../../utils/sesiones.js';
 
 const ESTADO_LABEL = {
   proxima: 'Próxima',
@@ -101,7 +102,7 @@ export default function CalendarizacionMensual() {
               <CardS
                 key={f.id}
                 estado={f.estado}
-                titulo={`Sesión Ordinaria N° ${f.numeroSesion}`}
+                titulo={encabezadoSesion(f).titulo}
                 subtitulo={f.label}
                 estadoLabel={f.id === sesionActivaFecha ? 'Activa' : ESTADO_LABEL[f.estado]}
                 onClick={() => cargarSesion(f.id)}
