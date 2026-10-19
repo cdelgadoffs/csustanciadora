@@ -12,6 +12,11 @@ function entradasDe(punto) {
   return (punto.archivos || []).filter((a) => a.id).map((archivo) => ({ archivo, puntoId: punto.id }));
 }
 
+export function archivosAutomaticos(punto, sesion) {
+  if (!sesion?.listaCerrada || !punto?.fijo || punto.clave !== 'orden-dia') return [];
+  return [{ id: ID_ARCHIVO_ORDEN_DIA, nombre: nombreArchivoOrdenDia(sesion), tipo: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', tamano: null, creadoEn: null, autogenerado: true }];
+}
+
 export function carpetasDeSesion(puntos, sesion) {
   if (!sesion || puntos.length === 0) return [];
   const fijo = (clave) => puntos.find((p) => p.fijo && p.clave === clave);
@@ -21,9 +26,7 @@ export function carpetasDeSesion(puntos, sesion) {
     id: ID_CARPETA_ORDEN_DIA,
     nombre: '01-Aprobación del orden del día',
     puntoRef: ordenDia?.id ?? null,
-    archivos: sesion.listaCerrada
-      ? [{ archivo: { id: ID_ARCHIVO_ORDEN_DIA, nombre: nombreArchivoOrdenDia(sesion), tipo: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', tamano: null, creadoEn: null, autogenerado: true }, puntoId: ordenDia?.id ?? null }]
-      : [],
+    archivos: archivosAutomaticos(ordenDia, sesion).map((archivo) => ({ archivo, puntoId: ordenDia.id })),
   }];
   if (actaAnterior) {
     carpetas.push({ id: ID_CARPETA_ACTA_ANTERIOR, nombre: '02-Acta de la sesión anterior', puntoRef: actaAnterior.id, archivos: [] });

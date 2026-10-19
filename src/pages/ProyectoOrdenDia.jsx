@@ -9,6 +9,7 @@ import BotonCerrarLista from '../components/widgets/BotonCerrarLista.jsx';
 import BotonDescargar from '../components/widgets/BotonDescargar.jsx';
 import HorasCelebracion from '../components/widgets/HorasCelebracion.jsx';
 import FormularioPunto from '../components/widgets/FormularioPunto.jsx';
+import VisorArchivo from '../components/widgets/VisorArchivo.jsx';
 import ListaPuntosProyecto from '../components/widgets/ListaPuntosProyecto.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/MenuPanelControl.jsx';
 import { useUI, ANCHO_SIDEBAR3, ALTO_TOPBAR, ALTO_CINTA } from '../context/UIContext.jsx';
@@ -68,6 +69,7 @@ export default function ProyectoOrdenDia() {
       <PanelPrincipal izquierda={panelIzquierda} arriba={arriba}>
         <ListaPuntosProyecto />
       </PanelPrincipal>
+      <VisorArchivo />
     </>
   );
 }

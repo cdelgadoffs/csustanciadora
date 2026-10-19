@@ -4,7 +4,7 @@ import Checkbox from '../base/Checkbox.jsx';
 import Scrollbar from '../base/Scrollbar.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
-import { puntosOrdenados, puntoActivo } from '../../utils/puntos.js';
+import { puntosOrdenados, puntoActivo, etiquetaAsunto } from '../../utils/puntos.js';
 import '../../styles/widgets/ListaPuntosSesion.css';
 
 export default function ListaPuntosSesion() {
@@ -44,7 +44,7 @@ export default function ListaPuntosSesion() {
           {termino && items.length > 0 && (
             <div className="widget-lista-puntos-sesion-vacio">{items.length} {items.length === 1 ? 'coincidencia' : 'coincidencias'} para «{termino}»</div>
           )}
-          {items.map(({ punto, titulo }) => (
+          {items.map(({ punto, numero }) => (
             <BotonSeleccionableMenu
               key={punto.id}
               activo={punto.id === activoId}
@@ -60,7 +60,7 @@ export default function ListaPuntosSesion() {
                 </span>
               }
             >
-              {titulo}
+              {etiquetaAsunto(numero)}
             </BotonSeleccionableMenu>
           ))}
         </div>

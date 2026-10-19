@@ -24,6 +24,10 @@ export function tituloPunto(numero, punto) {
   return `${numero}. ${textoPunto(punto)}`;
 }
 
+export function etiquetaAsunto(numero) {
+  return `Asunto ${numero}`;
+}
+
 export function puntosNumerados(puntos) {
   return puntos.map((punto, i) => ({ punto, numero: i + 1, titulo: tituloPunto(i + 1, punto) }));
 }
