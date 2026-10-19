@@ -191,6 +191,11 @@ export function ProyectoProvider({ children }) {
     const editado = conSync(await eliminarArchivoEnApi(puntoId, archivoId));
     aplicarPuntos(puntos.map((p) => (p.id === puntoId ? editado : p)));
   }
+  async function obtenerDatosSesion(sesionId) {
+    const sesion = fechasSesiones.find((f) => f.id === sesionId);
+    if (!sesion) throw new Error('La sesión ya no existe.');
+    return { sesion, puntos: await listarPuntos(sesionId) };
+  }
   function descargarArchivo(archivoId) {
     return descargarArchivoEnApi(archivoId);
   }
@@ -210,7 +215,7 @@ export function ProyectoProvider({ children }) {
     sesionFinalizada, comenzarSesion, finalizarSesion, editarHorario, programarHora,
     listaCerrada, establecerListaCerrada,
     PUNTOS: puntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
-    marcarPunto, marcarTodosPuntos, guardarDeliberacion, adjuntarArchivos, eliminarArchivo, descargarArchivo,
+    marcarPunto, marcarTodosPuntos, guardarDeliberacion, adjuntarArchivos, eliminarArchivo, descargarArchivo, obtenerDatosSesion,
     agregarSesiones,
     guardarBorrador, obtenerBorrador, eliminarBorrador,
     cargando, error,

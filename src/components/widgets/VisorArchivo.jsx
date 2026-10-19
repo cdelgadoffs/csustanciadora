@@ -4,15 +4,14 @@ import BotonS from '../base/BotonS.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { guardarEnDisco, tipoDeVistaPrevia } from '../../utils/archivos.js';
-import { ID_ARCHIVO_ORDEN_DIA } from '../../utils/arbolArchivos.js';
-import { generarWordOrdenDia } from '../../utils/ordenDia.js';
+import { GENERADORES_AUTOMATICOS } from '../../utils/arbolArchivos.js';
 import '../../styles/widgets/VisorArchivo.css';
 
 const SIN_CARGAR = { id: null, error: null, archivo: null, url: null, texto: '' };
 
 export default function VisorArchivo() {
   const { archivoEnVista, cerrarVistaArchivo } = useUI();
-  const { descargarArchivo, sesionSeleccionada, PUNTOS } = useProyecto();
+  const { descargarArchivo, obtenerDatosSesion, sesionSeleccionada, PUNTOS } = useProyecto();
   const [estado, setEstado] = useState(SIN_CARGAR);
   const contenedorWord = useRef(null);
 
@@ -25,8 +24,11 @@ export default function VisorArchivo() {
     if (!idEnVista) return undefined;
     let vigente = true;
     let urlActual = null;
-    const obtener = idEnVista === ID_ARCHIVO_ORDEN_DIA
-      ? generarWordOrdenDia({ sesion: sesionSeleccionada, puntos: PUNTOS })
+    const generar = GENERADORES_AUTOMATICOS[archivoEnVista.generador];
+    const otraSesion = archivoEnVista.sesionId && archivoEnVista.sesionId !== sesionSeleccionada?.id;
+    const obtener = generar
+      ? (otraSesion ? obtenerDatosSesion(archivoEnVista.sesionId) : Promise.resolve({ sesion: sesionSeleccionada, puntos: PUNTOS }))
+        .then(generar)
         .then(({ blob, nombreArchivo }) => ({ nombre: nombreArchivo, tipo: archivoEnVista.tipo, blob }))
       : descargarArchivo(idEnVista);
     obtener

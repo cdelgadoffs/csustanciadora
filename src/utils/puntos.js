@@ -1,23 +1,29 @@
 import { MESES } from './meses.js';
 import { ordinalFemenino } from './numerosOrdinales.js';
 
-function fechaCompleta(iso) {
-  const [anio, mes, dia] = iso.split('-').map(Number);
-  return `${dia} de ${MESES[mes - 1].toLowerCase()} de ${anio}`;
+function diaYMes(iso) {
+  const [, mes, dia] = iso.split('-').map(Number);
+  return `${dia} de ${MESES[mes - 1].toLowerCase()}`;
 }
 
-function enumerar(textos) {
+export function enumerar(textos) {
   return textos.length > 1 ? `${textos.slice(0, -1).join(', ')} y ${textos[textos.length - 1]}` : textos[0];
+}
+
+export function fechasAgrupadas(fechas) {
+  const anios = [...new Set(fechas.map((f) => f.slice(0, 4)))];
+  if (anios.length > 1) return { dias: enumerar(fechas.map((f) => `${diaYMes(f)} de ${f.slice(0, 4)}`)), anio: null };
+  return { dias: enumerar(fechas.map(diaYMes)), anio: anios[0] };
 }
 
 export function textoPunto(punto) {
   const actas = punto.actas || [];
   if (actas.length === 0) return punto.contenido || 'Sin contenido';
   const reuniones = enumerar(actas.map((a) => ordinalFemenino(a.numeroSesion)));
-  const fechas = enumerar(actas.map((a) => fechaCompleta(a.fecha)));
-  return actas.length === 1
-    ? `Aprobación del acta de la ${reuniones} reunión del ${fechas}`
-    : `Aprobación de las actas de las ${reuniones} reunión del ${fechas}`;
+  const { dias, anio } = fechasAgrupadas(actas.map((a) => a.fecha));
+  if (actas.length === 1) return `Aprobación del acta de la ${reuniones} reunión celebrada el ${dias}${anio ? ` de ${anio}` : ''}`;
+  const todas = actas.length === 2 ? 'ambas' : 'todas';
+  return `Aprobación de las actas de la ${reuniones} reuniones celebradas el ${dias}${anio ? `, ${todas} de ${anio}` : ''}`;
 }
 
 export function tituloPunto(numero, punto) {

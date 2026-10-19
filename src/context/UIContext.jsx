@@ -50,7 +50,7 @@ export function UIProvider({ children }) {
     setVistaActual('proyecto');
   }
   function abrirVistaArchivo(archivo) {
-    setArchivoEnVista({ id: archivo.id, nombre: archivo.nombre, tipo: archivo.tipo });
+    setArchivoEnVista({ id: archivo.id, nombre: archivo.nombre, tipo: archivo.tipo, generador: archivo.generador ?? null, sesionId: archivo.sesionId ?? null });
   }
   function cerrarVistaArchivo() {
     setArchivoEnVista(null);

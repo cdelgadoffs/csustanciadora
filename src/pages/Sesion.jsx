@@ -11,6 +11,7 @@ import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widg
 import HorariosSesion from '../components/widgets/HorariosSesion.jsx';
 import BotonComenzarSesion from '../components/widgets/BotonComenzarSesion.jsx';
 import BotonFinalizarSesion from '../components/widgets/BotonFinalizarSesion.jsx';
+import BotonDescargar from '../components/widgets/BotonDescargar.jsx';
 import ConteoPuntosSesion from '../components/widgets/ConteoPuntosSesion.jsx';
 import { useUI, ANCHO_SIDEBAR2 } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
@@ -37,7 +38,7 @@ export default function Sesion() {
         ancho={ANCHO_SIDEBAR1_SESION}
         titulo={sesionActual.titulo}
         subtitulo={sesionActual.subtitulo}
-        pie={sesionSeleccionada && !sesionFinalizada ? (sesionSeleccionada.horaInicio ? <BotonFinalizarSesion /> : <BotonComenzarSesion />) : null}
+        pie={sesionSeleccionada ? (sesionFinalizada ? <BotonDescargar documento="acta" /> : sesionSeleccionada.horaInicio ? <BotonFinalizarSesion /> : <BotonComenzarSesion />) : null}
       >
         <MenuPrincipalSesion />
         <HorariosSesion />
