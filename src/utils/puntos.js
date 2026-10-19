@@ -1,5 +1,27 @@
+import { MESES } from './meses.js';
+import { ordinalFemenino } from './numerosOrdinales.js';
+
+function fechaCompleta(iso) {
+  const [anio, mes, dia] = iso.split('-').map(Number);
+  return `${dia} de ${MESES[mes - 1].toLowerCase()} de ${anio}`;
+}
+
+function enumerar(textos) {
+  return textos.length > 1 ? `${textos.slice(0, -1).join(', ')} y ${textos[textos.length - 1]}` : textos[0];
+}
+
+export function textoPunto(punto) {
+  const actas = punto.actas || [];
+  if (actas.length === 0) return punto.contenido || 'Sin contenido';
+  const reuniones = enumerar(actas.map((a) => ordinalFemenino(a.numeroSesion)));
+  const fechas = enumerar(actas.map((a) => fechaCompleta(a.fecha)));
+  return actas.length === 1
+    ? `Aprobación del acta de la ${reuniones} reunión del ${fechas}`
+    : `Aprobación de las actas de las ${reuniones} reunión del ${fechas}`;
+}
+
 export function tituloPunto(numero, punto) {
-  return `${numero}. ${punto.contenido || 'Sin contenido'}`;
+  return `${numero}. ${textoPunto(punto)}`;
 }
 
 export function puntosNumerados(puntos) {
@@ -13,7 +35,7 @@ export function normalizarTexto(texto) {
 export function puntoCoincide(punto, termino) {
   const buscado = normalizarTexto(termino).trim();
   if (!buscado) return true;
-  return [punto.contenido, punto.deliberacion].some((texto) => normalizarTexto(texto).includes(buscado));
+  return [textoPunto(punto), punto.deliberacion].some((texto) => normalizarTexto(texto).includes(buscado));
 }
 
 export function puntosOrdenados(puntos, secciones, termino = '') {

@@ -21,9 +21,11 @@ Todas las operaciones son asíncronas. Los datos viajan como JSON. Los errores t
 | `numeroSesion` | int | Derivado. Consecutivo oficial. Avanza en `celebrada` y `proxima`; una `no-celebrada` no consume número. |
 | `estado` | string | Derivado. `celebrada` · `proxima` · `no-celebrada` · `pendiente`. |
 | `celebrada` | bool | Hecho persistido. |
+| `horaProgramada` | string \| null | Hora convocada de la reunión, escrita a mano (`"HH:MM"`), con `programarHora`. Independiente de `horaInicio` (la real). `null` si no se ha definido. |
 | `horaInicio` | string \| null | Timestamp del servidor al comenzar (`comenzarSesion`); `null` si no ha comenzado. Editable con `editarHorario`. |
 | `horaFin` | string \| null | Timestamp del servidor al celebrar; `null` si no se ha celebrado. Editable con `editarHorario`. |
 | `enCurso` | bool | **Derivado.** `true` si comenzó y aún no se celebra. |
+| `actasAprobadas` | string[] \| ausente | Solo en sesiones celebradas: ids de las sesiones cuya acta se aprobó en ella (ver "Puntos fijos"). Interno del servidor; no se entrega en `listarSesiones`. |
 | `listaCerrada` | bool | Hecho persistido. `false` por omisión (las sesiones anteriores al campo se leen como `false`). Ver "Lista cerrada". |
 | `celebradaEn` | string \| null | Timestamp. |
 | `version` | int | |
@@ -49,6 +51,7 @@ Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas p
 | `creadoPor`, `creadoEn`, `modificadoEn` | string | Autoría y fechas, del servidor. |
 | `fijo` | bool | **Derivado.** `true` solo en los puntos fijos (ver "Puntos fijos"). |
 | `clave` | string | **Derivado.** Solo en puntos fijos: su `id` en el catálogo `puntosFijos` (`orden-dia`, `acta-anterior`, `asuntos-generales`). |
+| `actas` | `{ sesionId, numeroSesion, fecha }[]` | **Derivado.** Solo en el punto fijo `acta-anterior`: las actas pendientes que aprueba. |
 | `encabezado` | bool | **Derivado.** Solo en puntos fijos que son un título de cierre (no se tratan ni se marcan). |
 
 ### Archivo
@@ -80,13 +83,14 @@ Con `Sesion.listaCerrada = true` la lista de puntos queda **bloqueada por comple
 
 Los define el catálogo `puntosFijos`; el servidor **los genera al leer** (`listarPuntos`, `marcarPunto`, `marcarPuntos`): nunca existen como registros de puntos. En este proyecto, el orden de cada sesión es:
 
-1. `orden-dia` — "Aprobación, en su caso, del orden del día." (siempre).
-2. `acta-anterior` — "Aprobación, en su caso, del acta de la sesión del {fecha}." Solo si existe una sesión **celebrada** con fecha anterior; `{fecha}` es la de la más reciente de ellas, con el formato "4 de octubre de 2026".
+1. `orden-dia` — "Orden del día" (siempre).
+2. `acta-anterior` — "Aprobación de actas" (texto genérico). Solo si la sesión tiene **actas pendientes de aprobar**. Lleva el campo derivado `actas`: `[{ sesionId, numeroSesion, fecha }]`, las reuniones pendientes en orden de fecha (`fecha` = `sesionId`, `YYYY-MM-DD`). **La frase que se muestra ("Aprobación del acta de la quinta reunión del 23 de abril de 2026" / "Aprobación de las actas de las quinta y sexta reunión del …") la redacta el cliente** a partir de `actas` (presentación); `contenido` queda como respaldo genérico.
 3. Los puntos registrados, por `orden`.
-4. `asuntos-generales` — "Asuntos generales." (siempre, al final). Es `encabezado`: un título de cierre, no un punto a tratar.
+4. `asuntos-generales` — "Asuntos Generales" (siempre, al final). Es `encabezado`: un título de cierre, no un punto a tratar.
 
 - Su `id` es `fijo:<sesionId>:<clave>`; `contenido` es el texto; `remitente` es `null`; `archivos` es `[]`; `confidencial` es `false`; `seccion` es la primera del catálogo.
 - **No se pueden editar, eliminar, mover ni adjuntarles archivos** (`VALIDACION`). `reordenarPuntos` recibe solo los ids de los puntos registrados.
+- **Actas pendientes (regla del servidor):** para una sesión X, son las sesiones **celebradas** con fecha anterior a X cuya acta no se ha aprobado en otra sesión celebrada anterior a X. Una sesión celebrada C aprueba las actas que estaban pendientes en C **si su punto `acta-anterior` estaba marcado como tratado al celebrarla**; si no, siguen pendientes y pasan a la siguiente. `celebrarSesion` guarda en la sesión `actasAprobadas: string[]` (ids; `[]` si no aprobó ninguna). Compatibilidad: una sesión celebrada sin `actasAprobadas` y con su `acta-anterior` marcado aprobó la sesión celebrada inmediatamente anterior a ella.
 - Los que no son `encabezado` se marcan como cualquier punto (`marcarPunto` con su `id`, y `marcarPuntos`); la marca se guarda en la sesión (`fijosTratados`) y empieza en `false`. Un `encabezado` siempre tiene `tratado: false` y `marcarPunto` lo rechaza (`VALIDACION`).
 
 ### Catálogos
@@ -98,7 +102,7 @@ Los catálogos de dominio son **datos, no código**: el API ofrece un mecanismo 
 | Catálogo | Atributos | Valores actuales |
 |---|---|---|
 | `secciones` | `requiereAcuerdo: bool` | `asuntos` (false): en este proyecto los puntos no se clasifican |
-| `puntosFijos` | `texto`, `posicion` (`inicio`/`final`), `condicion` (`siempre`/`sesionAnteriorCelebrada`), `encabezado: bool` | `orden-dia`, `acta-anterior`, `asuntos-generales` (ver "Puntos fijos") |
+| `puntosFijos` | `texto`, `posicion` (`inicio`/`final`), `condicion` (`siempre`/`actasPendientes`), `encabezado: bool` | `orden-dia`, `acta-anterior`, `asuntos-generales` (ver "Puntos fijos") |
 | `remitentes` | — | `pleno`, `presidencia`, `secretaria-general` |
 
 Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interfaz (menú, textos, íconos).
@@ -112,6 +116,7 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 | `crearSesiones(fechas)` | `string[]` de fechas `YYYY-MM-DD` | `Sesion[]` (la lista completa actualizada) | `NO_AUTORIZADO`, `VALIDACION` |
 | `comenzarSesion(id)` | id de sesión | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `SESION_NO_PROXIMA`, `LISTA_ABIERTA` |
 | `celebrarSesion(id)` | id de sesión | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `SESION_NO_PROXIMA`, `LISTA_ABIERTA`, `SESION_NO_COMENZADA` |
+| `programarHora(id, hora)` | id de sesión + `"HH:MM"` (o `""` para borrarla) | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `LISTA_CERRADA`, `VALIDACION` |
 | `editarHorario(id, cambios)` | id de sesión + `{ horaInicio?, horaFin? }` en `"HH:MM"` | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `HORARIO_INVALIDO` |
 | `establecerListaCerrada(id, cerrada)` | id de sesión + bool | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `listarPuntos(sesionId)` | id de sesión | `Punto[]` (ordenados por `orden`, **ya filtrados según el usuario**) | — |
@@ -145,6 +150,7 @@ Notas de comportamiento:
 - **Horarios de la celebración.** Pasos: cerrar la lista → `comenzarSesion(id)` → `celebrarSesion(id)`. Solo la sesión con estado `proxima` se puede comenzar o celebrar (`SESION_NO_PROXIMA`).
 - `comenzarSesion` exige la lista cerrada (`LISTA_ABIERTA`) y fija `horaInicio` con el reloj del servidor; es idempotente (si ya comenzó, no cambia la hora).
 - `celebrarSesion` exige la lista cerrada (`LISTA_ABIERTA`) y haber comenzado (`SESION_NO_COMENZADA`); fija `horaFin` y `celebrada` en una sola operación.
+- `programarHora` fija la hora convocada **solo con la lista abierta** (`LISTA_CERRADA`) y la sesión sin celebrar; valida `HH:MM` (00:00–23:59, `VALIDACION`); `""` la borra. Es idempotente. No afecta a `horaInicio`, `enCurso` ni al flujo de comenzar/celebrar.
 - `editarHorario` cambia la hora (no la fecha) de una marca existente: `VALIDACION` si el formato no es `HH:MM` (00:00–23:59), si no se indica ninguna o si la marca aún no existe; `HORARIO_INVALIDO` si el inicio queda después del fin. **Se permite siempre**, también con la sesión celebrada (decisión tomada de SIGEP: las horas alimentan el acta).
 - `establecerListaCerrada` es idempotente (repetir el mismo valor no cambia nada ni sube `version`); `VALIDACION` si `cerrada` no es booleano.
 - `celebrarSesion` devuelve solo la sesión celebrada; como `proxima` y `numeroSesion` de las demás pueden cambiar, el cliente vuelve a llamar `listarSesiones`.

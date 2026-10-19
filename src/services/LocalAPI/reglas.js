@@ -56,6 +56,7 @@ export function calcularEstados(sesiones) {
       estado,
       celebrada: !!s.celebrada,
       listaCerrada: !!s.listaCerrada,
+      horaProgramada: s.horaProgramada || null,
       horaInicio: s.horaInicio || null,
       horaFin: s.horaFin || null,
       enCurso: !!s.horaInicio && !s.celebrada,
@@ -135,11 +136,6 @@ export function normalizarPunto(p, catalogos) {
   };
 }
 
-const FORMATO_FECHA = new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-
-function fechaEnTexto(iso) {
-  return FORMATO_FECHA.format(new Date(`${iso}T00:00:00Z`));
-}
 
 export function esPuntoFijo(id) {
   return typeof id === 'string' && id.startsWith('fijo:');
@@ -156,18 +152,27 @@ export function analizarPuntoFijo(id) {
   return { sesionId, clave };
 }
 
+export function actasPendientes(sesion, sesiones) {
+  const celebradas = sesiones.filter((s) => s.celebrada && s.id < sesion.id).sort((a, b) => (a.id < b.id ? -1 : 1));
+  const aprobadas = new Set();
+  celebradas.forEach((c, i) => {
+    if (Array.isArray(c.actasAprobadas)) c.actasAprobadas.forEach((id) => aprobadas.add(id));
+    else if (c.fijosTratados?.['acta-anterior'] && i > 0) aprobadas.add(celebradas[i - 1].id);
+  });
+  return celebradas.filter((c) => !aprobadas.has(c.id));
+}
+
 export function generarPuntosFijos(sesion, sesiones, catalogos) {
-  const anteriorCelebrada = sesiones
-    .filter((s) => s.celebrada && s.id < sesion.id)
-    .sort((a, b) => (a.id < b.id ? 1 : -1))[0];
+  const numeros = new Map(calcularEstados(sesiones).map((s) => [s.id, s.numeroSesion]));
+  const pendientes = actasPendientes(sesion, sesiones);
   return (catalogos.puntosFijos || [])
-    .filter((f) => f.condicion !== 'sesionAnteriorCelebrada' || anteriorCelebrada)
+    .filter((f) => f.condicion !== 'actasPendientes' || pendientes.length > 0)
     .map((f) => ({
       id: `fijo:${sesion.id}:${f.id}`,
       sesionId: sesion.id,
       seccion: catalogos.secciones?.[0]?.id ?? null,
       remitente: null,
-      contenido: anteriorCelebrada ? f.texto.replace('{fecha}', fechaEnTexto(anteriorCelebrada.id)) : f.texto,
+      contenido: f.texto,
       acuerdo: '',
       confidencial: false,
       archivos: [],
@@ -177,6 +182,9 @@ export function generarPuntosFijos(sesion, sesiones, catalogos) {
       clave: f.id,
       encabezado: !!f.encabezado,
       posicion: f.posicion,
+      ...(f.condicion === 'actasPendientes'
+        ? { actas: pendientes.map((p) => ({ sesionId: p.id, numeroSesion: numeros.get(p.id), fecha: p.id })) }
+        : null),
     }));
 }
 

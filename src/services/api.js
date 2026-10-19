@@ -9,6 +9,7 @@ export const {
   comenzarSesion,
   celebrarSesion,
   editarHorario,
+  programarHora,
   establecerListaCerrada,
   listarPuntos,
   crearPunto,

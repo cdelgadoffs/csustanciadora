@@ -87,7 +87,7 @@ export default function VisorArchivo() {
       abierto={!!archivoEnVista}
       titulo={archivoEnVista?.nombre}
       onCerrar={cerrarVistaArchivo}
-      tamano={vista === 'word' || vista === 'pdf' ? 'documento' : vista ? 'completo' : 'normal'}
+      tamano={vista === 'pdf' ? 'documento' : vista ? 'completo' : 'normal'}
       acciones={cargado.archivo && <BotonS variant="claro" onClick={descargar}>Descargar</BotonS>}
     >
       <div className="widget-visor-archivo">{contenido()}</div>

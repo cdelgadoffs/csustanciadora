@@ -8,7 +8,7 @@ import {
   validarFechasISO, calcularEstados,
   camposPunto, validarPunto, normalizarPunto,
   validarArchivos, prepararArchivos,
-  validarDeliberacion, validarHoraDelDia, conHoraDelDia, esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos,
+  validarDeliberacion, validarHoraDelDia, conHoraDelDia, esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos, actasPendientes,
 } from './reglas.js';
 
 async function exigirSesionAbierta(sesionId) {
@@ -82,7 +82,21 @@ export async function celebrarSesion(id) {
   if (!sesion.listaCerrada) throw new ApiError('LISTA_ABIERTA', 'Debes cerrar la lista de puntos antes de celebrar la sesión.');
   if (!sesion.horaInicio) throw new ApiError('SESION_NO_COMENZADA', 'Debes comenzar la sesión antes de celebrarla.');
   const ahora = new Date().toISOString();
-  await guardar(STORE_SESIONES, { ...sesion, celebrada: true, celebradaEn: ahora, horaFin: ahora, version: sesion.version + 1 });
+  const actasAprobadas = sesion.fijosTratados?.['acta-anterior']
+    ? actasPendientes(sesion, await obtenerTodos(STORE_SESIONES)).map((s) => s.id)
+    : [];
+  await guardar(STORE_SESIONES, { ...sesion, celebrada: true, celebradaEn: ahora, horaFin: ahora, actasAprobadas, version: sesion.version + 1 });
+  return (await listarSesiones()).find((s) => s.id === id);
+}
+
+export async function programarHora(id, hora) {
+  exigirEscritura();
+  const sesion = await exigirListaAbierta(id);
+  const valor = hora === '' || hora === null ? null : hora;
+  if (valor !== null) validarHoraDelDia(valor);
+  if ((sesion.horaProgramada || null) !== valor) {
+    await guardar(STORE_SESIONES, { ...sesion, horaProgramada: valor, version: sesion.version + 1 });
+  }
   return (await listarSesiones()).find((s) => s.id === id);
 }
 

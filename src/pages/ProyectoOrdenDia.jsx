@@ -7,6 +7,7 @@ import PanelPrincipal from '../components/base/PanelPrincipal.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import BotonCerrarLista from '../components/widgets/BotonCerrarLista.jsx';
 import BotonDescargar from '../components/widgets/BotonDescargar.jsx';
+import HorasCelebracion from '../components/widgets/HorasCelebracion.jsx';
 import FormularioPunto from '../components/widgets/FormularioPunto.jsx';
 import ListaPuntosProyecto from '../components/widgets/ListaPuntosProyecto.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/MenuPanelControl.jsx';
@@ -45,6 +46,7 @@ export default function ProyectoOrdenDia() {
         ) : null}
       >
         <MenuPrincipalSesion />
+        <HorasCelebracion />
       </Sidebar1>
       <Sidebar3
         abierto={sidebar3Abierto}
