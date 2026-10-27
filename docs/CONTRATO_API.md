@@ -44,6 +44,7 @@ Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas p
 | `archivos` | `Archivo[]` | Metadatos de los archivos adjuntos (ver "Archivo"). |
 | `orden` | int | Posición dentro de su (sesión, sección), 1…n (ver "Orden"). |
 | `deliberacion` | string | Lo deliberado en la sesión sobre el punto. Empieza vacío (los puntos anteriores al campo se leen como `""`). Máx. 20 000. Solo cambia con `guardarDeliberacion`. Los puntos fijos no lo tienen. |
+| `agregadoEnSesion` | bool | `true` si el punto se agregó durante la reunión (desde la elaboración del acta) y no estaba previsto en el orden del día. Solo se fija al crear (`crearPunto`, opcional, `false` por omisión) y no cambia después; solo se admite en secciones con `admiteConListaCerrada` (`VALIDACION`). Los puntos anteriores al campo se leen como `false`. El cliente lo usa para excluirlo del orden del día. |
 | `tratado` | bool | Marca de la celebración: el punto ya se trató. Empieza en `false`; los puntos anteriores al campo se leen como `false`. Solo cambia con `marcarPunto`. |
 | `version` | int | |
 | `creadoPor`, `creadoEn`, `modificadoEn` | string | Autoría y fechas, del servidor. |
@@ -118,7 +119,7 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 | `programarHoraTermino(id, hora)` | id de sesión + `"HH:MM"` (o `""` para borrarla) | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `HORARIO_INVALIDO` |
 | `establecerListaCerrada(id, cerrada)` | id de sesión + bool | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `listarPuntos(sesionId)` | id de sesión | `Punto[]` (ordenados por `orden`, **ya filtrados según el usuario**) | — |
-| `crearPunto(sesionId, datos)` | sesión + `{ seccion, remitente, contenido, acuerdo, confidencial, archivos }` | `Punto` creado | `NO_AUTORIZADO`, `VALIDACION`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
+| `crearPunto(sesionId, datos)` | sesión + `{ seccion, remitente, contenido, acuerdo, confidencial, archivos, agregadoEnSesion? }` | `Punto` creado | `NO_AUTORIZADO`, `VALIDACION`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
 | `editarPunto(id, version, cambios)` | id, `version` que el cliente tiene, campos a cambiar | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `CONFLICTO`, `VALIDACION` |
 | `eliminarPunto(id)` | id | — | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
 

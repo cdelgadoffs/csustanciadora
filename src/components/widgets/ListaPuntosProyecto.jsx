@@ -115,7 +115,8 @@ function listaDePuntos({ puntos, secciones, remitentes, estadoCarga, renderOpcio
 }
 
 export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtra }) {
-  const { PUNTOS: puntos, SECCIONES_DOCUMENTO, REMITENTES, sesionSeleccionada, sesionFinalizada, listaCerrada, reordenarPuntos, cargando, error } = useProyecto();
+  const { PUNTOS, SECCIONES_DOCUMENTO, REMITENTES, sesionSeleccionada, sesionFinalizada, listaCerrada, reordenarPuntos, cargando, error } = useProyecto();
+  const puntos = PUNTOS.filter((p) => !p.agregadoEnSesion);
   const [errorAccion, setErrorAccion] = useState(null);
   const [moviendo, setMoviendo] = useState(false);
   const { terminoBusqueda, puntoDestinoProyecto, abrirVistaArchivo, abrirNuevoPunto } = useUI();
@@ -129,7 +130,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
     if (!tarjeta) return;
     destinoDesplazado.current = puntoDestinoProyecto;
     tarjeta.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  }, [puntoDestinoProyecto, puntos]);
+  }, [puntoDestinoProyecto, PUNTOS]);
   const estadoCarga = error ? 'error' : cargando ? 'cargando' : 'listo';
   const avisoError = (error || errorAccion) && (
     <div className="widget-lista-puntos-error">
@@ -138,8 +139,10 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   );
   async function mover(seccionId, deLaSeccion, indice, delta) {
     if (moviendo) return;
-    const ids = deLaSeccion.map((p) => p.id);
-    [ids[indice], ids[indice + delta]] = [ids[indice + delta], ids[indice]];
+    const ids = PUNTOS.filter((p) => !p.fijo && p.seccion === seccionId).map((p) => p.id);
+    const a = ids.indexOf(deLaSeccion[indice].id);
+    const b = ids.indexOf(deLaSeccion[indice + delta].id);
+    [ids[a], ids[b]] = [ids[b], ids[a]];
     setMoviendo(true);
     setErrorAccion(null);
     try {

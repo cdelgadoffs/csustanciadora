@@ -33,7 +33,7 @@ function tieneContenido(f) {
 
 export default function FormularioPunto() {
   const { SECCIONES_DOCUMENTO, REMITENTES, PUNTOS, agregarPunto, editarPunto, eliminarArchivo, descargarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
-  const { sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId, seccionNuevoPunto } = useUI();
+  const { sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId, seccionNuevoPunto, nuevoPuntoEnSesion } = useUI();
   const seccionUnica = seccionNuevoPunto || SECCIONES_DOCUMENTO[0]?.id || '';
   const [form, setForm] = useState(() => estadoVacio(seccionUnica));
   const [restaurado, setRestaurado] = useState(false);
@@ -165,7 +165,7 @@ export default function FormularioPunto() {
         await editarPunto(punto.id, punto.version, datos);
         cerrarSidebar3();
       } else {
-        await agregarPunto({ ...datos, archivos: form.archivos });
+        await agregarPunto({ ...datos, archivos: form.archivos, ...(nuevoPuntoEnSesion ? { agregadoEnSesion: true } : null) });
         setForm(estadoVacio(form.seccion));
       }
     } catch (e) {

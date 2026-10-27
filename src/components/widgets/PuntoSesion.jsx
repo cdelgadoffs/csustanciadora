@@ -7,7 +7,8 @@ import OpcionesAUD from './OpcionesAUD.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { puntosOrdenados, puntoActivo } from '../../utils/puntos.js';
-import { estiloArchivo, guardarEnDisco } from '../../utils/archivos.js';
+import { estiloArchivo } from '../../utils/archivos.js';
+import { archivosAutomaticos } from '../../utils/arbolArchivos.js';
 import '../../styles/widgets/PuntoSesion.css';
 
 function CampoDeliberacion({ punto, deshabilitado, onGuardar }) {
@@ -67,23 +68,12 @@ function CampoDeliberacion({ punto, deshabilitado, onGuardar }) {
 }
 
 export default function PuntoSesion() {
-  const { PUNTOS, SECCIONES_DOCUMENTO, REMITENTES, sesionFinalizada, listaCerrada, descargarArchivo, guardarDeliberacion, cargando, error } = useProyecto();
-  const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId, terminoBusqueda } = useUI();
-  const [errorAccion, setErrorAccion] = useState(null);
+  const { PUNTOS, SECCIONES_DOCUMENTO, REMITENTES, sesionSeleccionada, sesionFinalizada, listaCerrada, guardarDeliberacion, cargando, error } = useProyecto();
+  const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId, terminoBusqueda, abrirVistaArchivo } = useUI();
 
   const termino = terminoBusqueda.trim();
   const items = puntosOrdenados(PUNTOS, SECCIONES_DOCUMENTO, termino);
   const activo = puntoActivo(items, puntoSesionSeleccionadoId);
-
-  async function descargar(archivo) {
-    setErrorAccion(null);
-    try {
-      const { nombre, blob } = await descargarArchivo(archivo.id);
-      guardarEnDisco(nombre, blob);
-    } catch (e) {
-      setErrorAccion(e.mensaje || 'No se pudo descargar el archivo.');
-    }
-  }
 
   if (!activo) {
     const mensaje = error
@@ -100,7 +90,6 @@ export default function PuntoSesion() {
 
   return (
     <div className={'widget-punto-sesion' + (punto.tratado ? ' widget-punto-sesion-tratado' : '')}>
-      {errorAccion && <div className="widget-punto-sesion-error">{errorAccion}</div>}
       <Card>
         <div className="widget-punto-sesion-header">
           <span className={'widget-punto-sesion-titulo' + (punto.confidencial ? ' widget-punto-sesion-titulo-confidencial' : '')}>
@@ -110,30 +99,12 @@ export default function PuntoSesion() {
         </div>
         {!punto.fijo && (
           <>
-            {(!esInforme || punto.archivos.length > 0) && (
+            {!esInforme && (
               <div className="widget-punto-sesion-columnas">
-                {!esInforme && (
-                  <div className="widget-punto-sesion-columna widget-punto-sesion-principal">
-                    <span className="widget-punto-sesion-label">Acuerdo</span>
-                    <div className="widget-punto-sesion-acuerdo">{punto.acuerdo || 'Sin acuerdo'}</div>
-                  </div>
-                )}
-                {punto.archivos.length > 0 && (
-                  <div className="widget-punto-sesion-columna widget-punto-sesion-archivos">
-                    {punto.archivos.map((a, i) => {
-                      const { icono, tono } = estiloArchivo(a.nombre);
-                      return (
-                        <BadgeDinamico
-                          key={a.id ?? i}
-                          texto={a.nombre}
-                          icono={icono}
-                          tono={tono}
-                          onClick={a.id ? () => descargar(a) : undefined}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
+                <div className="widget-punto-sesion-columna widget-punto-sesion-principal">
+                  <span className="widget-punto-sesion-label">Acuerdo</span>
+                  <div className="widget-punto-sesion-acuerdo">{punto.acuerdo || 'Sin acuerdo'}</div>
+                </div>
               </div>
             )}
             <CampoDeliberacion
@@ -145,6 +116,20 @@ export default function PuntoSesion() {
           </>
         )}
         <div className="widget-punto-sesion-navegacion">
+          <div className="widget-punto-sesion-archivos">
+            {[...archivosAutomaticos(punto, sesionSeleccionada), ...(punto.fijo ? [] : punto.archivos)].map((a, i) => {
+              const { icono, tono } = estiloArchivo(a.nombre);
+              return (
+                <BadgeDinamico
+                  key={a.id ?? i}
+                  texto={a.nombre}
+                  icono={icono}
+                  tono={tono}
+                  onClick={a.id ? () => abrirVistaArchivo(a) : undefined}
+                />
+              );
+            })}
+          </div>
           <OpcionesNavegacion
             onAnterior={() => irA(-1)}
             onSiguiente={() => irA(1)}

@@ -29,7 +29,8 @@ export function nombreArchivoOrdenDia(sesion) {
   return `Orden del dia - ${tituloReunion(sesion)}.docx`;
 }
 
-export async function generarWordOrdenDia({ sesion, puntos }) {
+export async function generarWordOrdenDia({ sesion, puntos: todos }) {
+  const puntos = todos.filter((p) => !p.agregadoEnSesion);
   const {
     Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, ShadingType, BorderStyle, VerticalAlign, PageOrientation,
   } = await import('docx');

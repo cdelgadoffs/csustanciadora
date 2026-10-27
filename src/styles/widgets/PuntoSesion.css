@@ -12,14 +12,6 @@
   font-size: 13px;
   font-style: italic;
 }
-.widget-punto-sesion-error {
-  background: #fdecea;
-  border: 1px solid #f5c2c0;
-  border-radius: 6px;
-  color: #c62828;
-  font-size: 13px;
-  padding: 10px 14px;
-}
 .widget-punto-sesion-header {
   display: flex;
   align-items: center;
@@ -96,11 +88,11 @@
 }
 .widget-punto-sesion-archivos {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 5px;
-  flex: 0 0 auto;
-  max-width: 240px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .widget-punto-sesion-archivos .base-badge-dinamico {
   font-size: 10px;

@@ -29,7 +29,7 @@ export default function MenuPrincipalSesion() {
             key={v.id}
             activo={activo}
             deshabilitado={v.requiereListaCerrada && !listaCerrada && !activo}
-            badge={v.mostrarTotalPuntos ? contarPuntos(PUNTOS.filter((p) => puntoCoincide(p, terminoBusqueda))) : undefined}
+            badge={v.mostrarTotalPuntos ? contarPuntos(PUNTOS.filter((p) => !p.agregadoEnSesion && puntoCoincide(p, terminoBusqueda))) : undefined}
             accion={v.agregarPunto && activo && !listaCerrada && (
               <BotonAgregar onClick={agregarPunto}>+</BotonAgregar>
             )}

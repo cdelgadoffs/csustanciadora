@@ -8,7 +8,7 @@ import {
   validarFechasISO, calcularEstados,
   camposPunto, validarPunto, normalizarPunto,
   validarArchivos, prepararArchivos,
-  validarDeliberacion, validarHoraDelDia, validarOrdenHorario, estaCelebrada, admiteConListaCerrada, vaAlFinal, esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos,
+  validarDeliberacion, validarHoraDelDia, validarOrdenHorario, estaCelebrada, admiteConListaCerrada, validarAgregadoEnSesion, vaAlFinal, esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos,
 } from './reglas.js';
 
 async function exigirSesionAbierta(sesionId) {
@@ -125,6 +125,7 @@ export async function crearPunto(sesionId, datos) {
   await exigirListaAbierta(sesionId, [datos?.seccion]);
   const catalogos = await listarCatalogos();
   validarPunto(datos, catalogos);
+  const agregadoEnSesion = validarAgregadoEnSesion(datos, catalogos);
   const archivos = Array.from(datos.archivos || []);
   validarArchivos(archivos);
   const id = crypto.randomUUID();
@@ -136,6 +137,7 @@ export async function crearPunto(sesionId, datos) {
     sesionId,
     ...normalizarPunto(datos, catalogos),
     archivos: metadatos,
+    agregadoEnSesion,
     orden,
     tratado: false,
     version: 1,

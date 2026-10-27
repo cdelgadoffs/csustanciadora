@@ -105,6 +105,15 @@ export function validarPunto(p, catalogos) {
   if (typeof p.confidencial !== 'boolean') throw new ApiError('VALIDACION', 'Indicador de confidencialidad inválido.');
 }
 
+export function validarAgregadoEnSesion(datos, catalogos) {
+  if (datos.agregadoEnSesion === undefined) return false;
+  if (typeof datos.agregadoEnSesion !== 'boolean') throw new ApiError('VALIDACION', 'Indicador de punto agregado en sesión inválido.');
+  if (datos.agregadoEnSesion && !buscarSeccion(catalogos, datos.seccion)?.admiteConListaCerrada) {
+    throw new ApiError('VALIDACION', 'Solo los asuntos generales se pueden agregar durante la sesión.');
+  }
+  return datos.agregadoEnSesion;
+}
+
 export function validarArchivos(archivos, yaAdjuntos = 0) {
   if (!Array.isArray(archivos)) throw new ApiError('ARCHIVO_INVALIDO', 'Lista de archivos inválida.');
   if (yaAdjuntos + archivos.length > MAX_ARCHIVOS_PUNTO) {

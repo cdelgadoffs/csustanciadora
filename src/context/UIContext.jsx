@@ -20,6 +20,7 @@ export function UIProvider({ children }) {
   const [vistaActual, setVistaActualEstado] = useState('inicio');
   const [puntoEnEdicionId, setPuntoEnEdicionId] = useState(null);
   const [seccionNuevoPunto, setSeccionNuevoPunto] = useState(null);
+  const [nuevoPuntoEnSesion, setNuevoPuntoEnSesion] = useState(false);
   const [puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId] = useState(null);
   const [archivoEnVista, setArchivoEnVista] = useState(null);
   const [elementoNavegador, setElementoNavegador] = useState(null);
@@ -34,11 +35,13 @@ export function UIProvider({ children }) {
   function abrirEdicionPunto(id, seccion = null) {
     setPuntoEnEdicionId(id);
     setSeccionNuevoPunto(seccion);
+    setNuevoPuntoEnSesion(false);
     setSidebar3Abierto(true);
   }
-  function abrirNuevoPunto(seccion = null) {
+  function abrirNuevoPunto(seccion = null, { agregadoEnSesion = false } = {}) {
     setPuntoEnEdicionId(null);
     setSeccionNuevoPunto(seccion);
+    setNuevoPuntoEnSesion(agregadoEnSesion);
     setSidebar3Abierto(true);
   }
   function cerrarSidebar3() {
@@ -47,6 +50,7 @@ export function UIProvider({ children }) {
   }
   function setVistaActual(vista) {
     setVistaActualEstado(vista);
+    cerrarSidebar3();
     setElementoNavegador(null);
     setArchivoEnVista(null);
     if (vista !== 'proyecto') setPuntoDestinoProyecto(null);
@@ -76,7 +80,7 @@ export function UIProvider({ children }) {
     mostrarFormularioCalendario, setMostrarFormularioCalendario,
     terminoBusqueda, setTerminoBusqueda,
     vistaActual, setVistaActual,
-    puntoEnEdicionId, setPuntoEnEdicionId, abrirEdicionPunto, seccionNuevoPunto, abrirNuevoPunto,
+    puntoEnEdicionId, setPuntoEnEdicionId, abrirEdicionPunto, seccionNuevoPunto, nuevoPuntoEnSesion, abrirNuevoPunto,
     puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId,
     archivoEnVista, abrirVistaArchivo, cerrarVistaArchivo,
     elementoNavegador, setElementoNavegador,
