@@ -16,6 +16,7 @@ import BotonDescargar from '../components/widgets/BotonDescargar.jsx';
 import ConteoPuntosSesion from '../components/widgets/ConteoPuntosSesion.jsx';
 import { useUI, ANCHO_SIDEBAR2, ANCHO_SIDEBAR3 } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
+import '../styles/pages/Sesion.css';
 import { encabezadoSesion } from '../utils/sesiones.js';
 import { tituloFormularioPunto } from '../utils/puntos.js';
 

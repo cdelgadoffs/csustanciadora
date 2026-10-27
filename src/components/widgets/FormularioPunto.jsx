@@ -11,6 +11,8 @@ import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { useScrollbarPersonalizada } from '../../hooks/useScrollbarPersonalizada.js';
 import { estiloArchivo, guardarEnDisco } from '../../utils/archivos.js';
+import { docDesdeTexto, textoDeDoc } from '../../utils/textoFormato.js';
+import EditorTexto from './EditorTexto.jsx';
 import '../../styles/widgets/FormularioPunto.css';
 
 function estadoVacio(seccion) {
@@ -18,9 +20,10 @@ function estadoVacio(seccion) {
     seccion: seccion || '',
     remitente: '',
     remitenteOtro: '',
-    contenido: '',
+    contenidoFormato: docDesdeTexto(''),
     acuerdo: '',
     confidencial: false,
+    relevante: false,
     archivos: [],
   };
 }
@@ -30,7 +33,7 @@ function claveBorrador(seccion) {
 }
 
 function tieneContenido(f) {
-  return f.contenido.trim().length > 0 || f.acuerdo.trim().length > 0 || f.confidencial;
+  return textoDeDoc(f.contenidoFormato).length > 0 || f.acuerdo.trim().length > 0 || f.confidencial || f.relevante;
 }
 
 export default function FormularioPunto() {
@@ -55,7 +58,7 @@ export default function FormularioPunto() {
   }, [puntoEnEdicionId, punto]);
 
   useEffect(() => {
-    if (sidebar3Abierto) asuntoRef.current?.querySelector('textarea')?.focus({ preventScroll: true });
+    if (sidebar3Abierto) asuntoRef.current?.querySelector('[contenteditable]')?.focus({ preventScroll: true });
   }, [sidebar3Abierto, puntoEnEdicionId, seccionUnica]);
 
   useEffect(() => {
@@ -69,9 +72,10 @@ export default function FormularioPunto() {
           seccion: original.seccion,
           remitente: original.remitente,
           remitenteOtro: original.remitenteOtro ?? '',
-          contenido: original.contenido,
+          contenidoFormato: original.contenidoFormato ?? docDesdeTexto(original.contenido),
           acuerdo: original.acuerdo,
           confidencial: original.confidencial,
+          relevante: !!original.relevante,
           archivos: original.archivos,
         });
       }
@@ -85,7 +89,15 @@ export default function FormularioPunto() {
       .then((borrador) => {
         if (!vigente) return;
         claveGuardadaRef.current = borrador ? claveBorrador(seccion) : null;
-        if (borrador) setForm({ ...estadoVacio(seccion), ...borrador, seccion });
+        if (borrador) {
+          const { contenido, ...resto } = borrador;
+          setForm({
+            ...estadoVacio(seccion),
+            ...resto,
+            contenidoFormato: resto.contenidoFormato ?? docDesdeTexto(contenido),
+            seccion,
+          });
+        }
         setRestaurado(true);
       });
     return () => { vigente = false; };
@@ -168,9 +180,11 @@ export default function FormularioPunto() {
         seccion: form.seccion,
         remitente: remitenteActual,
         remitenteOtro: remitenteLibre ? form.remitenteOtro.trim() : '',
-        contenido: form.contenido.trim(),
+        contenido: textoDeDoc(form.contenidoFormato),
+        contenidoFormato: form.contenidoFormato,
         acuerdo: esInforme ? '' : form.acuerdo.trim(),
         confidencial: form.confidencial,
+        relevante: form.relevante,
       };
       if (editando) {
         await editarPunto(punto.id, punto.version, datos);
@@ -186,11 +200,21 @@ export default function FormularioPunto() {
     }
   }
 
-  const puedeConfirmar = !enviando && !!seccionActual && !!remitenteActual && (!remitenteLibre || form.remitenteOtro.trim().length > 0) && form.contenido.trim().length > 0 && (esInforme || form.acuerdo.trim().length > 0);
+  const puedeConfirmar = !enviando && !!seccionActual && !!remitenteActual && (!remitenteLibre || form.remitenteOtro.trim().length > 0) && textoDeDoc(form.contenidoFormato).length > 0 && (esInforme || form.acuerdo.trim().length > 0);
 
   return (
-    <div className="widget-formulario-punto-wrap">
+    <div className={'widget-formulario-punto-wrap' + (form.relevante ? ' widget-formulario-punto-relevante' : '')}>
       <div className="widget-formulario-punto" ref={contenedorRef} onScroll={onScroll}>
+      <div className="widget-formulario-punto-campo" ref={asuntoRef}>
+        <label className="widget-formulario-punto-label">{esInforme ? 'Asunto' : 'Punto de acuerdo'}</label>
+        <EditorTexto
+          value={form.contenidoFormato}
+          onChange={(doc) => actualizar('contenidoFormato', doc)}
+          placeholder={esInforme ? 'Asunto' : '...por el que/cual se...'}
+          ariaLabel={esInforme ? 'Asunto' : 'Punto de acuerdo'}
+        />
+      </div>
+
       <div className="widget-formulario-punto-fila">
         <div className="widget-formulario-punto-campo widget-formulario-punto-remitente">
           <label className="widget-formulario-punto-label">Remitente</label>
@@ -260,15 +284,6 @@ export default function FormularioPunto() {
         </div>
       )}
 
-      <div className="widget-formulario-punto-campo" ref={asuntoRef}>
-        <label className="widget-formulario-punto-label">{esInforme ? 'Asunto' : 'Punto de acuerdo'}</label>
-        <Textarea
-          value={form.contenido}
-          onChange={(v) => actualizar('contenido', v)}
-          placeholder={esInforme ? 'Asunto' : '...por el que/cual se...'}
-        />
-      </div>
-
       {!esInforme && (
         <div className="widget-formulario-punto-campo">
           <label className="widget-formulario-punto-label">Acuerdo</label>
@@ -277,9 +292,9 @@ export default function FormularioPunto() {
       )}
 
       <Checkbox
-        checked={form.confidencial}
-        onChange={(v) => actualizar('confidencial', v)}
-        label="Marcar como confidencial"
+        checked={form.relevante}
+        onChange={(v) => actualizar('relevante', v)}
+        label="Marcar como asunto relevante"
       />
 
       {(error || errorCarga) && (

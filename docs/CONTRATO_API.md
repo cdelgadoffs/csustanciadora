@@ -39,10 +39,12 @@ Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas p
 | `sesionId` | string | Sesión a la que pertenece. Obligatorio. |
 | `seccion` | string | `id` de un elemento del catálogo `secciones`. |
 | `remitente` | string | `id` de un elemento del catálogo `remitentes`. |
+| `contenidoFormato` | object \| null | Contenido con formato (documento de TipTap/ProseMirror): `{ type: 'doc', content: Paragraph[] }`; cada párrafo con nodos `text` (marcas solo `bold`, `italic`, `underline`) y `hardBreak`. Si viene, el servidor lo limpia y **deriva `contenido`** (texto plano, párrafos separados por salto de línea); cualquier otro nodo o marca → `VALIDACION`. `null` en puntos sin formato (los anteriores). Al editar, enviar `contenido` sin `contenidoFormato` lo deja en `null`. |
 | `remitenteOtro` | string | Texto libre del remitente, **obligatorio** (1–200 caracteres) si el remitente elegido tiene `admiteTextoLibre`; vacío en otro caso (`VALIDACION`). |
 | `contenido` | string | Obligatorio, máx. 20 000 caracteres. |
 | `acuerdo` | string | Obligatorio si la sección tiene `requiereAcuerdo: true`; si no, se guarda vacío. Máx. 20 000. |
-| `confidencial` | bool | |
+| `confidencial` | bool | Hoy sin control en la interfaz (se conserva al editar). |
+| `relevante` | bool | Asunto marcado como relevante (para una lista independiente futura). `false` por omisión y en los puntos anteriores y fijos; no booleano → `VALIDACION`. |
 | `archivos` | `Archivo[]` | Metadatos de los archivos adjuntos (ver "Archivo"). |
 | `orden` | int | Posición dentro de su (sesión, sección), 1…n (ver "Orden"). |
 | `deliberacion` | string | Lo deliberado en la sesión sobre el punto. Empieza vacío (los puntos anteriores al campo se leen como `""`). Máx. 20 000. Solo cambia con `guardarDeliberacion`. Los puntos fijos no lo tienen. |
@@ -123,7 +125,7 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 | `programarHoraTermino(id, hora)` | id de sesión + `"HH:MM"` (o `""` para borrarla) | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `HORARIO_INVALIDO` |
 | `establecerListaCerrada(id, cerrada)` | id de sesión + bool | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `listarPuntos(sesionId)` | id de sesión | `Punto[]` (ordenados por `orden`, **ya filtrados según el usuario**) | — |
-| `crearPunto(sesionId, datos)` | sesión + `{ seccion, remitente, remitenteOtro?, contenido, acuerdo, confidencial, archivos, agregadoEnSesion? }` | `Punto` creado | `NO_AUTORIZADO`, `VALIDACION`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
+| `crearPunto(sesionId, datos)` | sesión + `{ seccion, remitente, remitenteOtro?, contenido, contenidoFormato?, acuerdo, confidencial, relevante?, archivos, agregadoEnSesion? }` | `Punto` creado | `NO_AUTORIZADO`, `VALIDACION`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
 | `editarPunto(id, version, cambios)` | id, `version` que el cliente tiene, campos a cambiar | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `CONFLICTO`, `VALIDACION` |
 | `eliminarPunto(id)` | id | — | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
 

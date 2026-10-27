@@ -1,5 +1,6 @@
 import { MESES } from './meses.js';
 import { ordinalFemenino } from './numerosOrdinales.js';
+import { partesConFormato } from './textoFormato.js';
 
 function diaYMes(iso) {
   const [, mes, dia] = iso.split('-').map(Number);
@@ -32,6 +33,15 @@ export function textoPunto(punto) {
   if (actas.length === 1) return `Aprobación del acta de la ${reuniones} reunión celebrada el ${dias}${anio ? ` de ${anio}` : ''}`;
   const todas = actas.length === 2 ? 'ambas' : 'todas';
   return `Aprobación de las actas de la ${reuniones} reuniones celebradas el ${dias}${anio ? `, ${todas} de ${anio}` : ''}`;
+}
+
+export function partesPunto(punto) {
+  if (punto.confidencial) return [[{ texto: 'CONFIDENCIAL' }]];
+  if (punto.contenidoFormato && !(punto.actas || []).length) {
+    const partes = partesConFormato(punto.contenidoFormato);
+    if (partes.length) return partes;
+  }
+  return [[{ texto: textoPunto(punto) }]];
 }
 
 export function numeroConPunto(numero) {

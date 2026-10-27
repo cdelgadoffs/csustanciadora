@@ -55,6 +55,9 @@
 .widget-lista-puntos-titulo-confidencial {
   color: #c62828;
 }
+.widget-lista-puntos-titulo-relevante {
+  color: #1e7d34;
+}
 .widget-lista-puntos-header-derecha {
   display: flex;
   align-items: center;
@@ -160,4 +163,10 @@
     width: 18px;
     opacity: 1;
   }
+}
+.widget-lista-puntos-titulo .base-texto-formato {
+  font-weight: 400;
+}
+.widget-lista-puntos-titulo .base-texto-formato .base-texto-formato-negrita {
+  font-weight: 700;
 }

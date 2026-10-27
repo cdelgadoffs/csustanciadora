@@ -1,5 +1,5 @@
 import { MESES } from './meses.js';
-import { puntosNumerados, textoPunto } from './puntos.js';
+import { puntosNumerados, partesPunto } from './puntos.js';
 import { ordinalFemenino } from './numerosOrdinales.js';
 
 const MARGEN = 1134;
@@ -73,28 +73,33 @@ export async function generarWordOrdenDia({ sesion, puntos: todos }) {
     children: [corrida(`ORDEN DEL DÍA DE LA ${tituloReunion(sesion)} DE ${fechaDelTitulo(sesion)}`, { bold: true, size: 22 })],
   });
 
-  const celda = (texto, { ancho, negrita = false, centrado = false, fondo, subpuntos = [] } = {}) => new TableCell({
+  const corridas = (partes, extra = {}) => partes.map((p) => corrida(p.texto, {
+    ...extra,
+    bold: extra.bold || p.negrita,
+    italics: p.cursiva,
+    ...(p.subrayado ? { underline: {} } : null),
+  }));
+  const celda = (texto, { ancho, negrita = false, centrado = false, fondo, subpuntos = [], partes } = {}) => new TableCell({
     width: { size: ancho, type: WidthType.DXA },
     verticalAlign: VerticalAlign.CENTER,
     margins: { top: 80, bottom: 80, left: 100, right: 100 },
     ...(fondo ? { shading: { type: ShadingType.CLEAR, color: 'auto', fill: fondo } } : null),
     children: [
-      new Paragraph({
+      ...(partes ?? [[{ texto }]]).map((linea) => new Paragraph({
         alignment: centrado ? AlignmentType.CENTER : AlignmentType.LEFT,
-        children: [corrida(texto, { bold: negrita })],
-      }),
-      ...subpuntos.map(({ numero, texto: textoSub }) => new Paragraph({
-        spacing: { before: 80 },
-        children: [corrida(`${numero} `, { bold: true }), corrida(textoSub)],
+        children: corridas(linea, { bold: negrita }),
       })),
+      ...subpuntos.flatMap(({ numero, partes: partesSub }) => partesSub.map((linea, i) => new Paragraph({
+        spacing: { before: i === 0 ? 80 : 0 },
+        children: [...(i === 0 ? [corrida(`${numero} `, { bold: true })] : []), ...corridas(linea)],
+      }))),
     ],
   });
 
-  const textoFila = (punto) => (punto.confidencial ? 'CONFIDENCIAL' : textoPunto(punto));
   const grupos = [];
   puntosNumerados(puntos).forEach(({ punto, numero }) => {
     const esSubpunto = String(numero).includes('.');
-    if (esSubpunto && grupos.length > 0) grupos[grupos.length - 1].subpuntos.push({ numero, texto: textoFila(punto) });
+    if (esSubpunto && grupos.length > 0) grupos[grupos.length - 1].subpuntos.push({ numero, partes: partesPunto(punto) });
     else grupos.push({ punto, numero, subpuntos: [] });
   });
 
@@ -109,7 +114,7 @@ export async function generarWordOrdenDia({ sesion, puntos: todos }) {
     ...grupos.map(({ punto, numero, subpuntos }) => new TableRow({
       children: [
         celda(String(numero), { ancho: ANCHO_NUMERO, negrita: true, centrado: true }),
-        celda(textoFila(punto), { ancho: ANCHO_UTIL - ANCHO_NUMERO, negrita: punto.encabezado, subpuntos }),
+        celda('', { ancho: ANCHO_UTIL - ANCHO_NUMERO, negrita: punto.encabezado, subpuntos, partes: partesPunto(punto) }),
       ],
     })),
   ];

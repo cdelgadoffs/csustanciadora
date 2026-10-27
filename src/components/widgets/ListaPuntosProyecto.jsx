@@ -8,7 +8,9 @@ import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { estiloArchivo } from '../../utils/archivos.js';
 import { archivosAutomaticos } from '../../utils/arbolArchivos.js';
-import { puntosNumerados, puntoCoincide, nombreRemitente } from '../../utils/puntos.js';
+import { puntosNumerados, puntoCoincide, nombreRemitente, numeroConPunto } from '../../utils/puntos.js';
+import { partesConFormato } from '../../utils/textoFormato.js';
+import TextoConFormato from '../base/TextoConFormato.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import '../../styles/widgets/ListaPuntosProyecto.css';
 
@@ -23,7 +25,7 @@ function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opcione
     <div id={`punto-${punto.id}`} className={'widget-lista-puntos-item' + (seleccionada ? ' widget-lista-puntos-item-seleccionado' : '')}>
       <Card onClick={(e) => seleccionarSiNoEsControl(e, onSeleccionar)}>
         <div className="widget-lista-puntos-header">
-          <span className={'widget-lista-puntos-titulo' + (punto.confidencial ? ' widget-lista-puntos-titulo-confidencial' : '')}>
+          <span className={'widget-lista-puntos-titulo' + (punto.confidencial ? ' widget-lista-puntos-titulo-confidencial' : '') + (punto.relevante ? ' widget-lista-puntos-titulo-relevante' : '')}>
             {titulo}
           </span>
           <div className="widget-lista-puntos-header-derecha">
@@ -74,7 +76,12 @@ function listaDePuntos({ puntos, secciones, remitentes, estadoCarga, renderOpcio
   const sinAsuntos = puntos.every((p) => p.fijo || seccionDe(p)?.alFinal) && estadoCarga === 'listo' && (
     <div key="vacio" className="widget-lista-puntos-vacio">Sin asuntos registrados.</div>
   );
-  const numeros = new Map(puntosNumerados(puntos).map(({ punto, titulo }) => [punto.id, titulo]));
+  const numeros = new Map(puntosNumerados(puntos).map(({ punto, numero, titulo }) => [
+    punto.id,
+    punto.contenidoFormato
+      ? <>{numeroConPunto(numero)} <TextoConFormato parrafos={partesConFormato(punto.contenidoFormato)} /></>
+      : titulo,
+  ]));
   const visibles = termino ? puntos.filter((p) => !p.encabezado && puntoCoincide(p, termino)) : puntos;
   if (termino && visibles.length === 0) {
     return <div className="widget-lista-puntos-vacio">Sin coincidencias para «{termino}».</div>;

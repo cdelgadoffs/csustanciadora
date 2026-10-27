@@ -1,5 +1,5 @@
 import { MESES } from './meses.js';
-import { puntosNumerados, textoPunto, fechasAgrupadas, numeroConPunto } from './puntos.js';
+import { puntosNumerados, partesPunto, fechasAgrupadas, numeroConPunto } from './puntos.js';
 import { ordinalFemenino } from './numerosOrdinales.js';
 import { fechaEnLetras, horaEnLetras } from './numerosEnLetras.js';
 
@@ -27,8 +27,12 @@ function fechaCorta(iso) {
   return `${dia} de ${MESES[mes - 1].toLowerCase()} de ${anio}`;
 }
 
-function conPunto(texto) {
-  return /[.!?]$/.test(texto) ? texto : `${texto}.`;
+function conPuntoFinal(partes) {
+  const lineas = partes.map((l) => l.map((p) => ({ ...p })));
+  const ultima = lineas[lineas.length - 1];
+  const parte = ultima[ultima.length - 1];
+  if (parte && !/[.!?]\s*$/.test(parte.texto)) parte.texto = `${parte.texto.trimEnd()}.`;
+  return lineas;
 }
 
 function textoActasAprobadas(punto, sesion) {
@@ -86,7 +90,15 @@ export async function generarWordActa({ sesion, puntos }) {
       spacing: { before: 240, after: 160, line: 300 },
       indent: { left: 567, hanging: 567 },
       tabStops: [{ type: TabStopType.LEFT, position: 567 }],
-      children: [corrida(`${numeroConPunto(numero)}\t${conPunto(punto.confidencial ? 'CONFIDENCIAL' : textoPunto(punto))}`, { bold: true })],
+      children: [
+        corrida(`${numeroConPunto(numero)}\t`, { bold: true }),
+        ...conPuntoFinal(partesPunto(punto)).flatMap((linea, i) => linea.map((p, j) => corrida(p.texto, {
+          bold: true,
+          italics: p.cursiva,
+          ...(p.subrayado ? { underline: {} } : null),
+          ...(i > 0 && j === 0 ? { break: 1 } : null),
+        }))),
+      ],
     }),
     ...cuerpoPunto(punto, sesion, puntos).map((texto) => parrafo([corrida(texto)])),
   ]);

@@ -1,0 +1,9 @@
+.base-texto-formato-negrita {
+  font-weight: 700;
+}
+.base-texto-formato-cursiva {
+  font-style: italic;
+}
+.base-texto-formato-subrayado {
+  text-decoration: underline;
+}

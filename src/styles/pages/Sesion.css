@@ -1,0 +1,4 @@
+.base-sidebar3:has(.widget-formulario-punto-relevante) {
+  background: #e6f4ea;
+  transition: background 0.2s;
+}

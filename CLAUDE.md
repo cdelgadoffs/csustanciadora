@@ -207,6 +207,23 @@ Versión mínima/media completa (sin adjuntos a backend real, sin OneDrive, sin 
 - `base/BotonIcono.jsx` — nuevo átomo genérico (botón cuadrado con un ícono, prop `icono` = clase CSS del ícono). Usa **Remix Icon** vía CDN (`cdn.jsdelivr.net/npm/remixicon`), cargado una sola vez en `index.html` (no por componente, igual que una fuente global) — es el ícono estándar del proyecto para botones de acción; no mezclar con otras librerías de íconos.
 - `Sidebar3` **se queda abierto tras "Añadir"** — solo `Cancelar` y el ✕ lo cierran. El formulario se resetea a vacío después de agregar.
 
+## Estado actual del formato del asunto (referencia funcional)
+
+Tomado de SIGEP (`EditorTexto`/`BarraHerramientasTexto`, solo consulta), reducido a negrita, cursiva y subrayado. Contrato en `docs/CONTRATO_API.md` (`Punto.contenidoFormato`).
+
+- **Dato:** `Punto.contenidoFormato` (documento de TipTap: párrafos con `text`/`hardBreak`, marcas solo `bold`/`italic`/`underline`). El API lo limpia y valida (`limpiarFormato` en `LocalAPI/reglas.js`, otro nodo o marca → `VALIDACION`) y **deriva `contenido`** (texto plano, `conContenidoDeFormato`), que siguen usando el buscador, los nombres de carpeta y todo lo demás. Puntos anteriores: `contenidoFormato: null`. Al editar, mandar `contenido` sin `contenidoFormato` lo pone en `null`.
+- **Dependencia:** TipTap (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/pm`, `@tiptap/core`, `@tiptap/extension-placeholder`, v3). El build avisa de un chunk > 500 kB (solo aviso).
+- **`widgets/EditorTexto`** (CSS propio): es widget porque importa TipTap (regla mecánica). Editor + barra con `base/BotonIcono` (Negrita `ri-bold`, Cursiva `ri-italic`, Subrayado `ri-underline`), activos según la selección; atajos Ctrl+B/I/U. Un solo widget (un consumidor, tres botones). `base/BotonIcono` ganó, opt-in, `activo` (fondo azul, `aria-pressed`) y `sinRobarFoco` (no quita el foco al editor).
+- **`FormularioPunto`:** "Asunto" va **arriba de todo** (antes de Remitente/Adjuntar), con `EditorTexto` en lugar de `Textarea` y el foco al abrir. El formulario guarda `contenidoFormato`; envía `contenido` (texto) + `contenidoFormato`. Borradores antiguos con `contenido` se convierten con `docDesdeTexto`.
+- **`utils/textoFormato.js`:** `docDesdeTexto`, `textoDeDoc` (validación de UX) y `partesConFormato(doc)` (párrafos → partes `{ texto, negrita, cursiva, subrayado }`). `partesPunto(punto)` de `utils/puntos.js` es la fuente para los Word ("CONFIDENCIAL", formato o `textoPunto`; el punto de actas usa siempre `textoPunto`).
+- **Dónde se ve:** `base/TextoConFormato` (nuevo, recibe `parrafos`) en el título de las tarjetas de `ListaPuntosProyecto` y de `PuntoSesion` ("N. " + contenido con formato; en esos títulos el contenido con formato va en peso normal y solo lo marcado en negrita, regla de anfitrión en el CSS de cada widget). El orden del día (`ordenDia.js`, también en los subpuntos) y el acta (`actaSesion.js`, título del punto en negrita con cursiva/subrayado conservados y el punto final) también lo respetan. La lista "Asunto N" de `Sidebar2` no lo necesita.
+
+## Estado actual del asunto relevante (referencia funcional)
+
+- **Dato:** `Punto.relevante` (bool, contrato; `false` por omisión, en puntos anteriores y en fijos; no booleano → `VALIDACION`). Servirá para una lista independiente de asuntos relevantes (pendiente). En `ListaPuntosProyecto` el título de un asunto relevante va en verde (`#1e7d34`, como el rojo de confidencial).
+- **`FormularioPunto`:** el checkbox "Marcar como asunto relevante" (`base/Checkbox`) **reemplazó en la interfaz** a "Marcar como confidencial"; se guarda en el borrador y en edición. **Confidencial no se eliminó** (decisión del usuario): el campo y sus reglas siguen en el API y en los Word, solo no tiene control visible; al editar se conserva su valor. Para reactivarlo basta volver a montar su `Checkbox`.
+- **Sidebar3 verde suave mientras está marcado:** `FormularioPunto` agrega `widget-formulario-punto-relevante` a su contenedor y **cada page anfitriona** pinta su `Sidebar3` con `.base-sidebar3:has(.widget-formulario-punto-relevante)` (`#e6f4ea`) en su propio CSS (`ProyectoOrdenDia.css` y `Sesion.css`, nuevo). Sin estado en `UIContext` y sin tocar `base/Sidebar3`.
+
 ## Estado actual de los puntos fijos (referencia funcional)
 
 Contrato en `docs/CONTRATO_API.md` ("Puntos fijos"). Diseño tomado de SIGEP (solo consulta), simplificado a esta interfaz.
@@ -387,5 +404,5 @@ Implementa la sección "Arquitectura de datos" tal cual. Contrato completo en `d
   - Preferencia hasta ahora: **A**. Por decidir: tema inicial (seguir el del sistema operativo vs siempre claro) y si se reabre el trabajo de revisión pantalla por pantalla.
 - Autenticación real con MSAL (`AuthContext`, `LoginGate`, `BloqueadoGate`) — pausado hasta tener `clientId`/`authority` de un App Registration propio para esta app.
 - Sistema de permisos/roles que alimentaría `BloqueadoGate` — de momento no existe; cualquier cuenta autenticada pasaría.
-- `catalogs/` — carpeta existente pero vacía (ver arriba). `utils/` tiene `meses.js`, `fechas.js`, `archivos.js`, `sesiones.js`, `puntos.js`, `ordenDia.js`, `actaSesion.js`, `numerosOrdinales.js`, `numerosEnLetras.js`, `arbolArchivos.js` y `brillo.js`; `hooks/` tiene `useScrollbarPersonalizada.js`.
+- `catalogs/` — carpeta existente pero vacía (ver arriba). `utils/` tiene `meses.js`, `fechas.js`, `archivos.js`, `sesiones.js`, `puntos.js`, `ordenDia.js`, `actaSesion.js`, `numerosOrdinales.js`, `numerosEnLetras.js`, `arbolArchivos.js` y `brillo.js`; `hooks/` tiene `useScrollbarPersonalizada.js`. (`utils/` también tiene `invitados.js` y `textoFormato.js`.)
 - `Sidebar4` — montado desde `App.jsx` pero sin ningún trigger de apertura conectado todavía (solo existe el cierre); no iniciar esa conexión sin que se pida.

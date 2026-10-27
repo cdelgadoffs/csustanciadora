@@ -148,3 +148,9 @@
 .widget-punto-sesion-deliberacion-error {
   color: #c62828;
 }
+.widget-punto-sesion-titulo .base-texto-formato {
+  font-weight: 400;
+}
+.widget-punto-sesion-titulo .base-texto-formato .base-texto-formato-negrita {
+  font-weight: 700;
+}

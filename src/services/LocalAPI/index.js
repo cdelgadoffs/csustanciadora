@@ -8,7 +8,7 @@ import {
   validarFechasISO, calcularEstados,
   camposPunto, validarPunto, normalizarPunto,
   validarArchivos, prepararArchivos,
-  validarDeliberacion, validarInvitado, validarHoraDelDia, validarOrdenHorario, estaCelebrada, admiteConListaCerrada, validarAgregadoEnSesion, vaAlFinal, esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos,
+  validarDeliberacion, validarInvitado, conContenidoDeFormato, validarHoraDelDia, validarOrdenHorario, estaCelebrada, admiteConListaCerrada, validarAgregadoEnSesion, vaAlFinal, esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos,
 } from './reglas.js';
 
 async function exigirSesionAbierta(sesionId) {
@@ -151,8 +151,9 @@ export async function listarPuntos(sesionId) {
   ];
 }
 
-export async function crearPunto(sesionId, datos) {
+export async function crearPunto(sesionId, entrada) {
   exigirEscritura();
+  const datos = entrada ? conContenidoDeFormato(entrada) : entrada;
   if (!sesionId) throw new ApiError('VALIDACION', 'Debes indicar la sesión del punto.');
   await exigirListaAbierta(sesionId, [datos?.seccion]);
   const catalogos = await listarCatalogos();
@@ -195,7 +196,9 @@ export async function editarPunto(id, version, cambios) {
   if (actual.version !== version) {
     throw new ApiError('CONFLICTO', 'El punto cambió desde que lo cargaste. Recarga e intenta de nuevo.');
   }
-  const combinado = { ...actual, ...camposPunto(cambios) };
+  const nuevos = camposPunto(cambios);
+  if ('contenido' in nuevos && !('contenidoFormato' in nuevos)) nuevos.contenidoFormato = null;
+  const combinado = conContenidoDeFormato({ ...actual, ...nuevos });
   const catalogos = await listarCatalogos();
   validarPunto(combinado, catalogos);
   const cambiaSeccion = combinado.seccion !== actual.seccion;

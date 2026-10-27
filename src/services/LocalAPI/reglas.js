@@ -1,6 +1,6 @@
 import { ApiError } from '../ApiError.js';
 
-const CAMPOS_PUNTO = ['seccion', 'remitente', 'remitenteOtro', 'contenido', 'acuerdo', 'confidencial'];
+const CAMPOS_PUNTO = ['seccion', 'remitente', 'remitenteOtro', 'contenido', 'contenidoFormato', 'acuerdo', 'confidencial', 'relevante'];
 const MAX_TEXTO = 20000;
 const MAX_BYTES_ARCHIVO = 100 * 1024 * 1024;
 const MAX_ARCHIVOS_PUNTO = 30;
@@ -88,6 +88,49 @@ export function vaAlFinal(catalogos, punto) {
   return !!buscarSeccion(catalogos, punto.seccion)?.alFinal;
 }
 
+const MARCAS_PERMITIDAS = ['bold', 'italic', 'underline'];
+const MAX_PARRAFOS = 500;
+
+function limpiarNodoEnLinea(nodo) {
+  if (nodo?.type === 'hardBreak') return { type: 'hardBreak' };
+  if (nodo?.type !== 'text' || typeof nodo.text !== 'string' || nodo.text === '') {
+    throw new ApiError('VALIDACION', 'El formato del contenido es inválido.');
+  }
+  const marcas = Array.isArray(nodo.marks) ? nodo.marks.map((m) => m?.type) : [];
+  if (marcas.some((m) => !MARCAS_PERMITIDAS.includes(m))) {
+    throw new ApiError('VALIDACION', 'El contenido solo admite negrita, cursiva y subrayado.');
+  }
+  const unicas = MARCAS_PERMITIDAS.filter((m) => marcas.includes(m));
+  return unicas.length ? { type: 'text', text: nodo.text, marks: unicas.map((type) => ({ type })) } : { type: 'text', text: nodo.text };
+}
+
+export function limpiarFormato(doc) {
+  if (!doc || doc.type !== 'doc' || !Array.isArray(doc.content) || doc.content.length > MAX_PARRAFOS) {
+    throw new ApiError('VALIDACION', 'El formato del contenido es inválido.');
+  }
+  return {
+    type: 'doc',
+    content: doc.content.map((parrafo) => {
+      if (parrafo?.type !== 'paragraph') throw new ApiError('VALIDACION', 'El formato del contenido es inválido.');
+      const hijos = Array.isArray(parrafo.content) ? parrafo.content.map(limpiarNodoEnLinea) : [];
+      return hijos.length ? { type: 'paragraph', content: hijos } : { type: 'paragraph' };
+    }),
+  };
+}
+
+export function textoDeFormato(doc) {
+  return doc.content
+    .map((p) => (p.content || []).map((n) => (n.type === 'hardBreak' ? '\n' : n.text)).join(''))
+    .join('\n')
+    .trim();
+}
+
+export function conContenidoDeFormato(datos) {
+  if (datos.contenidoFormato === undefined || datos.contenidoFormato === null) return { ...datos, contenidoFormato: null };
+  const contenidoFormato = limpiarFormato(datos.contenidoFormato);
+  return { ...datos, contenidoFormato, contenido: textoDeFormato(contenidoFormato) };
+}
+
 export function validarPunto(p, catalogos) {
   const seccion = buscarSeccion(catalogos, p.seccion);
   if (!seccion) throw new ApiError('VALIDACION', 'Sección inválida.');
@@ -108,6 +151,7 @@ export function validarPunto(p, catalogos) {
   }
   if (acuerdo.length > MAX_TEXTO) throw new ApiError('VALIDACION', 'El acuerdo es demasiado largo.');
   if (typeof p.confidencial !== 'boolean') throw new ApiError('VALIDACION', 'Indicador de confidencialidad inválido.');
+  if (p.relevante !== undefined && typeof p.relevante !== 'boolean') throw new ApiError('VALIDACION', 'Indicador de asunto relevante inválido.');
 }
 
 export function validarAgregadoEnSesion(datos, catalogos) {
@@ -155,8 +199,10 @@ export function normalizarPunto(p, catalogos) {
     remitente: p.remitente,
     remitenteOtro: typeof p.remitenteOtro === 'string' ? p.remitenteOtro.trim().replace(/\s+/g, ' ') : '',
     contenido: p.contenido.trim(),
+    contenidoFormato: p.contenidoFormato ?? null,
     acuerdo: seccion.requiereAcuerdo ? (p.acuerdo || '').trim() : '',
     confidencial: p.confidencial,
+    relevante: !!p.relevante,
   };
 }
 
@@ -199,6 +245,7 @@ export function generarPuntosFijos(sesion, sesiones, catalogos) {
       contenido: f.texto,
       acuerdo: '',
       confidencial: false,
+      relevante: false,
       archivos: [],
       tratado: f.encabezado ? false : !!sesion.fijosTratados?.[f.id],
       version: sesion.version,
