@@ -1,0 +1,24 @@
+.widget-hora-termino {
+  padding: 12px 16px;
+}
+.widget-hora-termino-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+}
+.widget-hora-termino-etiqueta {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+.widget-hora-termino-mensaje {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: #c62828;
+}
+.widget-hora-termino-acciones {
+  display: flex;
+  justify-content: flex-end;
+}

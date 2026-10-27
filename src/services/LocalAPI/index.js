@@ -8,20 +8,13 @@ import {
   validarFechasISO, calcularEstados,
   camposPunto, validarPunto, normalizarPunto,
   validarArchivos, prepararArchivos,
-  validarDeliberacion, validarHoraDelDia, conHoraDelDia, esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos, actasPendientes,
+  validarDeliberacion, validarHoraDelDia, validarOrdenHorario, estaCelebrada, esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos,
 } from './reglas.js';
 
 async function exigirSesionAbierta(sesionId) {
   const sesion = await obtener(STORE_SESIONES, sesionId);
   if (!sesion) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
-  if (sesion.celebrada) throw new ApiError('SESION_CELEBRADA', 'La sesión ya fue celebrada y no admite cambios.');
-  return sesion;
-}
-
-async function exigirSesionProxima(sesionId) {
-  const sesion = await exigirSesionAbierta(sesionId);
-  const estado = (await listarSesiones()).find((s) => s.id === sesionId)?.estado;
-  if (estado !== 'proxima') throw new ApiError('SESION_NO_PROXIMA', 'Solo se puede comenzar o celebrar la sesión próxima.');
+  if (estaCelebrada(sesion)) throw new ApiError('SESION_CELEBRADA', 'La sesión ya fue celebrada y no admite cambios.');
   return sesion;
 }
 
@@ -59,34 +52,11 @@ export async function crearSesiones(fechas) {
   for (const id of new Set(fechas)) {
     if (existentes.has(id)) continue;
     await guardar(STORE_SESIONES, {
-      id, celebrada: false, celebradaEn: null, version: 1,
+      id, version: 1,
       creadaEn: ahora, creadaPor: usuarioActual().id,
     });
   }
   return listarSesiones();
-}
-
-export async function comenzarSesion(id) {
-  exigirEscritura();
-  const sesion = await exigirSesionProxima(id);
-  if (!sesion.listaCerrada) throw new ApiError('LISTA_ABIERTA', 'Debes cerrar la lista de puntos antes de comenzar la sesión.');
-  if (!sesion.horaInicio) {
-    await guardar(STORE_SESIONES, { ...sesion, horaInicio: new Date().toISOString(), version: sesion.version + 1 });
-  }
-  return (await listarSesiones()).find((s) => s.id === id);
-}
-
-export async function celebrarSesion(id) {
-  exigirEscritura();
-  const sesion = await exigirSesionProxima(id);
-  if (!sesion.listaCerrada) throw new ApiError('LISTA_ABIERTA', 'Debes cerrar la lista de puntos antes de celebrar la sesión.');
-  if (!sesion.horaInicio) throw new ApiError('SESION_NO_COMENZADA', 'Debes comenzar la sesión antes de celebrarla.');
-  const ahora = new Date().toISOString();
-  const actasAprobadas = sesion.fijosTratados?.['acta-anterior']
-    ? actasPendientes(sesion, await obtenerTodos(STORE_SESIONES)).map((s) => s.id)
-    : [];
-  await guardar(STORE_SESIONES, { ...sesion, celebrada: true, celebradaEn: ahora, horaFin: ahora, actasAprobadas, version: sesion.version + 1 });
-  return (await listarSesiones()).find((s) => s.id === id);
 }
 
 export async function programarHora(id, hora) {
@@ -94,32 +64,23 @@ export async function programarHora(id, hora) {
   const sesion = await exigirListaAbierta(id);
   const valor = hora === '' || hora === null ? null : hora;
   if (valor !== null) validarHoraDelDia(valor);
+  validarOrdenHorario(valor, sesion.horaTermino);
   if ((sesion.horaProgramada || null) !== valor) {
     await guardar(STORE_SESIONES, { ...sesion, horaProgramada: valor, version: sesion.version + 1 });
   }
   return (await listarSesiones()).find((s) => s.id === id);
 }
 
-export async function editarHorario(id, cambios) {
+export async function programarHoraTermino(id, hora) {
   exigirEscritura();
   const sesion = await obtener(STORE_SESIONES, id);
   if (!sesion) throw new ApiError('NO_ENCONTRADO', 'La sesión no existe.');
-  const claves = ['horaInicio', 'horaFin'].filter((k) => cambios && k in cambios);
-  if (claves.length === 0) throw new ApiError('VALIDACION', 'Indica la hora de inicio o la de fin.');
-  const nuevo = { ...sesion };
-  claves.forEach((clave) => {
-    validarHoraDelDia(cambios[clave]);
-    if (!sesion[clave]) {
-      throw new ApiError('VALIDACION', clave === 'horaInicio' ? 'La sesión aún no ha comenzado.' : 'La sesión aún no ha terminado.');
-    }
-    nuevo[clave] = conHoraDelDia(sesion[clave], cambios[clave]);
-  });
-  if (nuevo.horaInicio && nuevo.horaFin && nuevo.horaInicio > nuevo.horaFin) {
-    throw new ApiError('HORARIO_INVALIDO', claves.includes('horaInicio')
-      ? 'La hora de inicio no puede ser posterior a la hora de fin.'
-      : 'La hora de fin no puede ser anterior a la hora de inicio.');
+  const valor = hora === '' || hora === null ? null : hora;
+  if (valor !== null) validarHoraDelDia(valor);
+  validarOrdenHorario(sesion.horaProgramada, valor);
+  if ((sesion.horaTermino || null) !== valor) {
+    await guardar(STORE_SESIONES, { ...sesion, horaTermino: valor, version: sesion.version + 1 });
   }
-  await guardar(STORE_SESIONES, { ...nuevo, version: sesion.version + 1 });
   return (await listarSesiones()).find((s) => s.id === id);
 }
 

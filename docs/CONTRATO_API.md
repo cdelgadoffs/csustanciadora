@@ -20,18 +20,16 @@ Todas las operaciones son asíncronas. Los datos viajan como JSON. Los errores t
 | `id` | string | Fecha `YYYY-MM-DD`. Es la identidad natural: **una sesión por fecha**. |
 | `numeroSesion` | int | Derivado. Consecutivo oficial. Avanza en `celebrada` y `proxima`; una `no-celebrada` no consume número. |
 | `estado` | string | Derivado. `celebrada` · `proxima` · `no-celebrada` · `pendiente`. |
-| `celebrada` | bool | Hecho persistido. |
-| `horaProgramada` | string \| null | Hora convocada de la reunión, escrita a mano (`"HH:MM"`), con `programarHora`. Independiente de `horaInicio` (la real). `null` si no se ha definido. |
-| `horaInicio` | string \| null | Timestamp del servidor al comenzar (`comenzarSesion`); `null` si no ha comenzado. Editable con `editarHorario`. |
-| `horaFin` | string \| null | Timestamp del servidor al celebrar; `null` si no se ha celebrado. Editable con `editarHorario`. |
-| `enCurso` | bool | **Derivado.** `true` si comenzó y aún no se celebra. |
-| `actasAprobadas` | string[] \| ausente | Solo en sesiones celebradas: ids de las sesiones cuya acta se aprobó en ella (ver "Puntos fijos"). Interno del servidor; no se entrega en `listarSesiones`. |
+| `celebrada` | bool | **Derivado.** `true` si la lista está cerrada y la fecha ya pasó (`listaCerrada && id < hoy`, reloj del servidor). No hay operación para celebrar. (Compatibilidad: una sesión guardada antes con `celebrada: true` sigue celebrada.) |
+| `horaProgramada` | string \| null | Hora convocada de la reunión, escrita a mano (`"HH:MM"`), con `programarHora`. `null` si no se ha definido. |
+| `horaTermino` | string \| null | Hora de término de la reunión, escrita a mano (`"HH:MM"`), con `programarHoraTermino`. `null` si no se ha definido. |
+| `actasAprobadas` | string[] \| ausente | Solo en sesiones celebradas con la versión anterior del flujo (compatibilidad): ids de las sesiones cuya acta se aprobó en ella. Interno del servidor; no se entrega en `listarSesiones`. |
 | `listaCerrada` | bool | Hecho persistido. `false` por omisión (las sesiones anteriores al campo se leen como `false`). Ver "Lista cerrada". |
 | `celebradaEn` | string \| null | Timestamp. |
 | `version` | int | |
 
 Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas por `id`):
-`celebrada` si `celebrada`; `proxima` si es la primera con `id >= hoy` y no celebrada; `no-celebrada` si `id < hoy` y no celebrada; `pendiente` en cualquier otro caso.
+`celebrada` si `celebrada` (derivado, ver arriba); `proxima` si es la primera con `id >= hoy` y no celebrada; `no-celebrada` si `id < hoy` y no celebrada; `pendiente` en cualquier otro caso.
 
 ### Punto
 | Campo | Tipo | Notas |
@@ -77,7 +75,7 @@ Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas p
 
 ### Lista cerrada
 
-Con `Sesion.listaCerrada = true` la lista de puntos queda **bloqueada por completo**: `crearPunto`, `editarPunto`, `eliminarPunto` y `reordenarPuntos` responden `LISTA_CERRADA`. Siguen permitidos `adjuntarArchivos`, `eliminarArchivo`, `marcarPunto`, `marcarPuntos` y `guardarDeliberacion`. Una sesión no se puede celebrar con la lista abierta (`LISTA_ABIERTA`).
+Con `Sesion.listaCerrada = true` la lista de puntos queda **bloqueada por completo**: `crearPunto`, `editarPunto`, `eliminarPunto` y `reordenarPuntos` responden `LISTA_CERRADA`. Siguen permitidos `adjuntarArchivos`, `eliminarArchivo`, `marcarPunto`, `marcarPuntos` y `guardarDeliberacion`. Cerrar la lista es lo que permite que la sesión quede celebrada cuando pase su fecha; una sesión cuya fecha pasó con la lista abierta queda `no-celebrada`.
 
 ### Puntos fijos
 
@@ -90,7 +88,7 @@ Los define el catálogo `puntosFijos`; el servidor **los genera al leer** (`list
 
 - Su `id` es `fijo:<sesionId>:<clave>`; `contenido` es el texto; `remitente` es `null`; `archivos` es `[]`; `confidencial` es `false`; `seccion` es la primera del catálogo.
 - **No se pueden editar, eliminar, mover ni adjuntarles archivos** (`VALIDACION`). `reordenarPuntos` recibe solo los ids de los puntos registrados.
-- **Actas pendientes (regla del servidor):** para una sesión X, son las sesiones **celebradas** con fecha anterior a X cuya acta no se ha aprobado en otra sesión celebrada anterior a X. Una sesión celebrada C aprueba las actas que estaban pendientes en C **si su punto `acta-anterior` estaba marcado como tratado al celebrarla**; si no, siguen pendientes y pasan a la siguiente. `celebrarSesion` guarda en la sesión `actasAprobadas: string[]` (ids; `[]` si no aprobó ninguna). Compatibilidad: una sesión celebrada sin `actasAprobadas` y con su `acta-anterior` marcado aprobó la sesión celebrada inmediatamente anterior a ella.
+- **Actas pendientes (regla del servidor):** para una sesión X, son las sesiones **celebradas** con fecha anterior a X cuya acta no se ha aprobado en otra sesión celebrada anterior a X. Una sesión celebrada C aprueba **todas** las actas que estaban pendientes en C **si su punto `acta-anterior` está marcado como tratado**; si no, siguen pendientes y pasan a la siguiente. Se calcula al leer (nada se guarda). Compatibilidad: si una sesión guardó `actasAprobadas` (flujo anterior), se respeta esa lista.
 - Los que no son `encabezado` se marcan como cualquier punto (`marcarPunto` con su `id`, y `marcarPuntos`); la marca se guarda en la sesión (`fijosTratados`) y empieza en `false`. Un `encabezado` siempre tiene `tratado: false` y `marcarPunto` lo rechaza (`VALIDACION`).
 
 ### Catálogos
@@ -114,10 +112,8 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 | `listarCatalogos()` | — | `{ secciones: Item[], remitentes: Item[] }` | — |
 | `listarSesiones()` | — | `Sesion[]` (con derivados, ordenadas por `id`) | — |
 | `crearSesiones(fechas)` | `string[]` de fechas `YYYY-MM-DD` | `Sesion[]` (la lista completa actualizada) | `NO_AUTORIZADO`, `VALIDACION` |
-| `comenzarSesion(id)` | id de sesión | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `SESION_NO_PROXIMA`, `LISTA_ABIERTA` |
-| `celebrarSesion(id)` | id de sesión | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `SESION_NO_PROXIMA`, `LISTA_ABIERTA`, `SESION_NO_COMENZADA` |
 | `programarHora(id, hora)` | id de sesión + `"HH:MM"` (o `""` para borrarla) | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `LISTA_CERRADA`, `VALIDACION` |
-| `editarHorario(id, cambios)` | id de sesión + `{ horaInicio?, horaFin? }` en `"HH:MM"` | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `HORARIO_INVALIDO` |
+| `programarHoraTermino(id, hora)` | id de sesión + `"HH:MM"` (o `""` para borrarla) | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `VALIDACION`, `HORARIO_INVALIDO` |
 | `establecerListaCerrada(id, cerrada)` | id de sesión + bool | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `listarPuntos(sesionId)` | id de sesión | `Punto[]` (ordenados por `orden`, **ya filtrados según el usuario**) | — |
 | `crearPunto(sesionId, datos)` | sesión + `{ seccion, remitente, contenido, acuerdo, confidencial, archivos }` | `Punto` creado | `NO_AUTORIZADO`, `VALIDACION`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
@@ -147,13 +143,10 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 
 Notas de comportamiento:
 - `crearSesiones` es **idempotente**: las fechas que ya existen se ignoran (no resetea `celebrada`); devuelve siempre la lista completa porque los derivados de las demás sesiones pueden cambiar.
-- **Horarios de la celebración.** Pasos: cerrar la lista → `comenzarSesion(id)` → `celebrarSesion(id)`. Solo la sesión con estado `proxima` se puede comenzar o celebrar (`SESION_NO_PROXIMA`).
-- `comenzarSesion` exige la lista cerrada (`LISTA_ABIERTA`) y fija `horaInicio` con el reloj del servidor; es idempotente (si ya comenzó, no cambia la hora).
-- `celebrarSesion` exige la lista cerrada (`LISTA_ABIERTA`) y haber comenzado (`SESION_NO_COMENZADA`); fija `horaFin` y `celebrada` en una sola operación.
-- `programarHora` fija la hora convocada **solo con la lista abierta** (`LISTA_CERRADA`) y la sesión sin celebrar; valida `HH:MM` (00:00–23:59, `VALIDACION`); `""` la borra. Es idempotente. No afecta a `horaInicio`, `enCurso` ni al flujo de comenzar/celebrar.
-- `editarHorario` cambia la hora (no la fecha) de una marca existente: `VALIDACION` si el formato no es `HH:MM` (00:00–23:59), si no se indica ninguna o si la marca aún no existe; `HORARIO_INVALIDO` si el inicio queda después del fin. **Se permite siempre**, también con la sesión celebrada (decisión tomada de SIGEP: las horas alimentan el acta).
+- **Celebración automática.** No hay operaciones para comenzar ni celebrar: una sesión queda `celebrada` sola cuando su lista está cerrada y su fecha ya pasó (reloj del servidor). Desde ese momento es inmutable (`SESION_CELEBRADA`) y ya no se puede reabrir la lista.
+- `programarHora` fija la hora convocada **solo con la lista abierta** (`LISTA_CERRADA`) y la sesión sin celebrar; valida `HH:MM` (00:00–23:59, `VALIDACION`); `""` la borra. Es idempotente. `HORARIO_INVALIDO` si quedaría después de `horaTermino`.
+- `programarHoraTermino` fija la hora de término escrita a mano. **Se permite siempre**, también con la lista cerrada y con la sesión celebrada (las horas alimentan el acta). Valida `HH:MM` (`VALIDACION`); `""` la borra; idempotente. `HORARIO_INVALIDO` si quedaría antes de `horaProgramada`.
 - `establecerListaCerrada` es idempotente (repetir el mismo valor no cambia nada ni sube `version`); `VALIDACION` si `cerrada` no es booleano.
-- `celebrarSesion` devuelve solo la sesión celebrada; como `proxima` y `numeroSesion` de las demás pueden cambiar, el cliente vuelve a llamar `listarSesiones`.
 - `editarPunto` con `version` distinta de la actual → `CONFLICTO` (el cliente debe recargar). Solo se modifican los campos permitidos del punto; el resultado se valida completo.
 - Una sesión **celebrada es inmutable**: no admite crear, editar ni eliminar puntos.
 
@@ -168,11 +161,8 @@ Notas de comportamiento:
 | `SESION_CELEBRADA` | La operación no aplica a una sesión ya celebrada. |
 | `ARCHIVO_INVALIDO` | Archivo con tipo no permitido, que excede el tamaño (100 MB) o que supera el máximo por punto (30). |
 | `NO_DISPONIBLE` | El servidor no puede atender la operación en este momento (en `LocalAPI`: la base está bloqueada por otra pestaña con una versión anterior). Se puede reintentar. |
-| `SESION_NO_PROXIMA` | Solo la sesión próxima se puede comenzar o celebrar. |
-| `SESION_NO_COMENZADA` | Se intentó celebrar una sesión que no ha comenzado. |
-| `HORARIO_INVALIDO` | La hora de inicio quedaría después de la de fin. |
+| `HORARIO_INVALIDO` | La hora de inicio quedaría después de la de término. |
 | `LISTA_CERRADA` | La lista de puntos de la sesión está cerrada y la operación la modificaría. |
-| `LISTA_ABIERTA` | La operación exige la lista cerrada (celebrar). |
 | `NO_IMPLEMENTADO` | Solo `ServerConnection` mientras no exista backend. |
 
 ## Permisos

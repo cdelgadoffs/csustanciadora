@@ -8,7 +8,7 @@ import { puntosOrdenados, puntoActivo, etiquetaAsunto } from '../../utils/puntos
 import '../../styles/widgets/ListaPuntosSesion.css';
 
 export default function ListaPuntosSesion() {
-  const { PUNTOS, SECCIONES_DOCUMENTO, sesionFinalizada, marcarPunto, cargando, error } = useProyecto();
+  const { PUNTOS, SECCIONES_DOCUMENTO, sesionFinalizada, marcarPunto, cargando, error } = useProyecto();  
   const { puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId, terminoBusqueda } = useUI();
   const termino = terminoBusqueda.trim();
   const [errorAccion, setErrorAccion] = useState(null);

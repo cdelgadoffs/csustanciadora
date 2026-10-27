@@ -33,7 +33,7 @@ export default function HorasCelebracion() {
           />
         </div>
         {listaCerrada && !sesionFinalizada && (
-          <p className="widget-horas-celebracion-aviso">Abre la lista para cambiar la hora.</p>
+          <p className="widget-horas-celebracion-aviso">Abre la lista para cambiar la hora de inicio.</p>
         )}
       </Card>
       <Modal abierto={!!error} titulo="Hora de inicio" onCerrar={() => setError(null)}>

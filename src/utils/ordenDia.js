@@ -1,5 +1,4 @@
 import { MESES } from './meses.js';
-import { horaDeISO } from './fechas.js';
 import { puntosNumerados, textoPunto } from './puntos.js';
 import { ordinalFemenino } from './numerosOrdinales.js';
 
@@ -39,7 +38,7 @@ export async function generarWordOrdenDia({ sesion, puntos }) {
   const raya = '__________';
   const datos = [
     ['Hora de inicio', horaDoce(sesion.horaProgramada) ?? raya],
-    ['Hora de término', horaDoce(sesion.horaFin && horaDeISO(sesion.horaFin)) ?? raya],
+    ['Hora de término', horaDoce(sesion.horaTermino) ?? raya],
     ['Número de asuntos', String(puntos.length)],
     ['Asuntos agregados', raya],
   ];

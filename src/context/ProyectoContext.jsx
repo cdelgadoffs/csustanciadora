@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import {
-  listarCatalogos, listarSesiones, crearSesiones, celebrarSesion,
+  listarCatalogos, listarSesiones, crearSesiones,
   establecerListaCerrada as establecerListaCerradaEnApi,
-  comenzarSesion as comenzarSesionEnApi, editarHorario as editarHorarioEnApi, programarHora as programarHoraEnApi,
+  programarHora as programarHoraEnApi, programarHoraTermino as programarHoraTerminoEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi,
   guardarDeliberacion as guardarDeliberacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
@@ -119,20 +119,12 @@ export function ProyectoProvider({ children }) {
   function cargarSesion(fecha) {
     setSesionActivaFecha(fecha);
   }
-  async function comenzarSesion() {
-    await comenzarSesionEnApi(sesionActivaFecha);
-    aplicarSesiones(await listarSesiones());
-  }
-  async function editarHorario(cambios) {
-    await editarHorarioEnApi(sesionActivaFecha, cambios);
-    aplicarSesiones(await listarSesiones());
-  }
   async function programarHora(hora) {
     await programarHoraEnApi(sesionActivaFecha, hora);
     aplicarSesiones(await listarSesiones());
   }
-  async function finalizarSesion() {
-    await celebrarSesion(sesionActivaFecha);
+  async function programarHoraTermino(hora) {
+    await programarHoraTerminoEnApi(sesionActivaFecha, hora);
     aplicarSesiones(await listarSesiones());
   }
   async function establecerListaCerrada(cerrada) {
@@ -212,7 +204,7 @@ export function ProyectoProvider({ children }) {
     SECCIONES_DOCUMENTO: catalogos.secciones, REMITENTES: catalogos.remitentes,
     FECHAS_SESIONES: fechasSesiones,
     sesionActivaFecha, cargarSesion,
-    sesionFinalizada, comenzarSesion, finalizarSesion, editarHorario, programarHora,
+    sesionFinalizada, programarHora, programarHoraTermino,
     listaCerrada, establecerListaCerrada,
     PUNTOS: puntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, marcarTodosPuntos, guardarDeliberacion, adjuntarArchivos, eliminarArchivo, descargarArchivo, obtenerDatosSesion,

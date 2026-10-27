@@ -8,12 +8,12 @@ import '../../styles/widgets/MenuPrincipalSesion.css';
 const VISTAS_MENU_PRINCIPAL = [
   { id: 'inicio', label: 'Inicio' },
   { id: 'proyecto', label: 'Proyecto del orden del día', agregarPunto: true, mostrarTotalPuntos: true },
-  { id: 'sesion', label: 'Celebrar sesión', labelFinalizada: 'Sesión celebrada', requiereListaCerrada: true },
+  { id: 'sesion', label: 'Elaboración de acta', requiereListaCerrada: true },
   { id: 'historial', label: 'Historial' },
 ];
 
 export default function MenuPrincipalSesion() {
-  const { PUNTOS, sesionFinalizada, listaCerrada } = useProyecto();
+  const { PUNTOS, listaCerrada } = useProyecto();
   const { vistaActual, setVistaActual, setSidebar3Abierto, setPuntoEnEdicionId, terminoBusqueda } = useUI();
 
   function agregarPunto() {
@@ -25,7 +25,6 @@ export default function MenuPrincipalSesion() {
     <div className="widget-menu-principal-sesion">
       {VISTAS_MENU_PRINCIPAL.map((v) => {
         const activo = vistaActual === v.id;
-        const label = v.labelFinalizada && sesionFinalizada ? v.labelFinalizada : v.label;
         return (
           <BotonSeleccionableMenu
             key={v.id}
@@ -37,7 +36,7 @@ export default function MenuPrincipalSesion() {
             )}
             onClick={() => setVistaActual(v.id)}
           >
-            {label}
+            {v.label}
           </BotonSeleccionableMenu>
         );
       })}

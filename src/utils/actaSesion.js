@@ -1,5 +1,4 @@
 import { MESES } from './meses.js';
-import { horaDeISO } from './fechas.js';
 import { puntosNumerados, textoPunto, fechasAgrupadas } from './puntos.js';
 import { ordinalFemenino } from './numerosOrdinales.js';
 import { fechaEnLetras, horaEnLetras } from './numerosEnLetras.js';
@@ -66,7 +65,7 @@ export async function generarWordActa({ sesion, puntos }) {
   const parrafo = (children, extra = {}) => new Paragraph({ alignment: AlignmentType.JUSTIFIED, spacing: { after: 200, line: 360 }, children, ...extra });
 
   const horaInicio = horaEnLetras(sesion.horaProgramada) ?? '[hora]';
-  const horaFin = horaEnLetras(sesion.horaFin && horaDeISO(sesion.horaFin)) ?? '[hora]';
+  const horaFin = horaEnLetras(sesion.horaTermino) ?? '[hora]';
   const fecha = fechaEnLetras(sesion.id);
 
   const titulo = new Paragraph({

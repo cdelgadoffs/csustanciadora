@@ -21,7 +21,7 @@ function archivoOrdenDia(sesion) {
 }
 
 function archivoActa(sesion) {
-  return sesion?.celebrada ? [automatico(ID_ARCHIVO_ACTA, nombreArchivoActa(sesion), 'acta')] : [];
+  return sesion?.listaCerrada ? [automatico(ID_ARCHIVO_ACTA, nombreArchivoActa(sesion), 'acta')] : [];
 }
 
 function actasDeSesionesAnteriores(punto) {
@@ -67,7 +67,7 @@ export function carpetasDeSesion(puntos, sesion) {
       const numero = String(i + 1 + carpetas.length).padStart(2, '0');
       carpetas.push({ id: punto.id, nombre: nombreSeguro(`${numero}-${punto.contenido}`), puntoRef: punto.id, archivos: entradasDe(punto) });
     });
-  if (sesion.celebrada) {
+  if (sesion.listaCerrada) {
     const numero = String(carpetas.length + 1).padStart(2, '0');
     carpetas.push({ id: ID_ARCHIVO_ACTA, nombre: `${numero}-Acta de la reunión`, puntoRef: null, archivos: archivoActa(sesion).map((archivo) => ({ archivo, puntoId: null })) });
   }

@@ -8,9 +8,7 @@ import ListaPuntosSesion from '../components/widgets/ListaPuntosSesion.jsx';
 import PuntoSesion from '../components/widgets/PuntoSesion.jsx';
 import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widgets/MenuPanelControl.jsx';
-import HorariosSesion from '../components/widgets/HorariosSesion.jsx';
-import BotonComenzarSesion from '../components/widgets/BotonComenzarSesion.jsx';
-import BotonFinalizarSesion from '../components/widgets/BotonFinalizarSesion.jsx';
+import HoraTermino from '../components/widgets/HoraTermino.jsx';
 import BotonDescargar from '../components/widgets/BotonDescargar.jsx';
 import ConteoPuntosSesion from '../components/widgets/ConteoPuntosSesion.jsx';
 import { useUI, ANCHO_SIDEBAR2 } from '../context/UIContext.jsx';
@@ -25,7 +23,7 @@ export default function Sesion() {
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
   } = useUI();
-  const { sesionSeleccionada, sesionFinalizada } = useProyecto();
+  const { sesionSeleccionada, listaCerrada } = useProyecto();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const izquierdaSidebar2 = izquierdaSidebar1 + ANCHO_SIDEBAR1_SESION;
   const panelIzquierda = izquierdaSidebar2 + ANCHO_SIDEBAR2;
@@ -38,10 +36,10 @@ export default function Sesion() {
         ancho={ANCHO_SIDEBAR1_SESION}
         titulo={sesionActual.titulo}
         subtitulo={sesionActual.subtitulo}
-        pie={sesionSeleccionada ? (sesionFinalizada ? <BotonDescargar documento="acta" /> : sesionSeleccionada.horaInicio ? <BotonFinalizarSesion /> : <BotonComenzarSesion />) : null}
+        pie={sesionSeleccionada && listaCerrada ? <BotonDescargar documento="acta" /> : null}
       >
         <MenuPrincipalSesion />
-        <HorariosSesion />
+        <HoraTermino />
       </Sidebar1>
       <Sidebar2
         izquierda={izquierdaSidebar2}

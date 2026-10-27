@@ -39,14 +39,18 @@ export function validarFechasISO(fechas) {
   });
 }
 
+export function estaCelebrada(sesion) {
+  return !!sesion.celebrada || (!!sesion.listaCerrada && sesion.id < fechaISO(new Date()));
+}
+
 export function calcularEstados(sesiones) {
   const hoyISO = fechaISO(new Date());
   const ordenadas = [...sesiones].sort((a, b) => (a.id < b.id ? -1 : 1));
-  const proxima = ordenadas.find((s) => s.id >= hoyISO && !s.celebrada);
+  const proxima = ordenadas.find((s) => s.id >= hoyISO && !estaCelebrada(s));
   let consecutivo = 0;
   return ordenadas.map((s) => {
     let estado = 'pendiente';
-    if (s.celebrada) estado = 'celebrada';
+    if (estaCelebrada(s)) estado = 'celebrada';
     else if (proxima && s.id === proxima.id) estado = 'proxima';
     else if (s.id < hoyISO) estado = 'no-celebrada';
     if (estado !== 'no-celebrada') consecutivo += 1;
@@ -54,13 +58,10 @@ export function calcularEstados(sesiones) {
       id: s.id,
       numeroSesion: consecutivo,
       estado,
-      celebrada: !!s.celebrada,
+      celebrada: estaCelebrada(s),
       listaCerrada: !!s.listaCerrada,
       horaProgramada: s.horaProgramada || null,
-      horaInicio: s.horaInicio || null,
-      horaFin: s.horaFin || null,
-      enCurso: !!s.horaInicio && !s.celebrada,
-      celebradaEn: s.celebradaEn || null,
+      horaTermino: s.horaTermino || null,
       version: s.version,
     };
   });
@@ -153,11 +154,11 @@ export function analizarPuntoFijo(id) {
 }
 
 export function actasPendientes(sesion, sesiones) {
-  const celebradas = sesiones.filter((s) => s.celebrada && s.id < sesion.id).sort((a, b) => (a.id < b.id ? -1 : 1));
+  const celebradas = sesiones.filter((s) => estaCelebrada(s) && s.id < sesion.id).sort((a, b) => (a.id < b.id ? -1 : 1));
   const aprobadas = new Set();
   celebradas.forEach((c, i) => {
     if (Array.isArray(c.actasAprobadas)) c.actasAprobadas.forEach((id) => aprobadas.add(id));
-    else if (c.fijosTratados?.['acta-anterior'] && i > 0) aprobadas.add(celebradas[i - 1].id);
+    else if (c.fijosTratados?.['acta-anterior']) celebradas.slice(0, i).forEach((anterior) => aprobadas.add(anterior.id));
   });
   return celebradas.filter((c) => !aprobadas.has(c.id));
 }
@@ -199,9 +200,8 @@ export function validarHoraDelDia(texto) {
   }
 }
 
-export function conHoraDelDia(iso, hhmm) {
-  const fecha = new Date(iso);
-  const [h, m] = hhmm.split(':').map(Number);
-  fecha.setHours(h, m, 0, 0);
-  return fecha.toISOString();
+export function validarOrdenHorario(inicio, termino) {
+  if (inicio && termino && inicio > termino) {
+    throw new ApiError('HORARIO_INVALIDO', 'La hora de inicio no puede ser posterior a la hora de término.');
+  }
 }
