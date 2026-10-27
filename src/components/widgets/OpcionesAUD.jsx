@@ -63,7 +63,7 @@ export default function OpcionesAUD({ punto, ocultar = [], children }) {
         </>
       )}
       {!ocultar.includes('editar') && (
-        <BotonIcono icono="ri-edit-line" ariaLabel="Editar punto" onClick={() => abrirEdicionPunto(punto.id)} />
+        <BotonIcono icono="ri-edit-line" ariaLabel="Editar punto" onClick={() => abrirEdicionPunto(punto.id, punto.seccion)} />
       )}
       {!ocultar.includes('eliminar') && (
         <BotonIcono icono="ri-delete-bin-line" ariaLabel="Eliminar punto" onClick={() => setConfirmando(true)} />

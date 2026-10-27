@@ -75,7 +75,7 @@ Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas p
 
 ### Lista cerrada
 
-Con `Sesion.listaCerrada = true` la lista de puntos queda **bloqueada por completo**: `crearPunto`, `editarPunto`, `eliminarPunto` y `reordenarPuntos` responden `LISTA_CERRADA`. Siguen permitidos `adjuntarArchivos`, `eliminarArchivo`, `marcarPunto`, `marcarPuntos` y `guardarDeliberacion`. Cerrar la lista es lo que permite que la sesión quede celebrada cuando pase su fecha; una sesión cuya fecha pasó con la lista abierta queda `no-celebrada`.
+Con `Sesion.listaCerrada = true` la lista de puntos queda **bloqueada**: `crearPunto`, `editarPunto`, `eliminarPunto` y `reordenarPuntos` responden `LISTA_CERRADA`, **salvo** cuando todas las secciones que tocan (la del punto y, al editar, la nueva) tienen `admiteConListaCerrada` (hoy, los asuntos generales). Siguen permitidos `adjuntarArchivos`, `eliminarArchivo`, `marcarPunto`, `marcarPuntos` y `guardarDeliberacion`. Cerrar la lista es lo que permite que la sesión quede celebrada cuando pase su fecha; una sesión cuya fecha pasó con la lista abierta queda `no-celebrada`.
 
 ### Puntos fijos
 
@@ -99,9 +99,11 @@ Los catálogos de dominio son **datos, no código**: el API ofrece un mecanismo 
 
 | Catálogo | Atributos | Valores actuales |
 |---|---|---|
-| `secciones` | `requiereAcuerdo: bool` | `asuntos` (false): en este proyecto los puntos no se clasifican |
+| `secciones` | `requiereAcuerdo: bool`, `admiteConListaCerrada: bool` (opcional), `alFinal: bool` (opcional) | `asuntos` (false) y `asuntos-generales` ("Asunto general": `admiteConListaCerrada`, `alFinal`) |
 | `puntosFijos` | `texto`, `posicion` (`inicio`/`final`), `condicion` (`siempre`/`actasPendientes`), `encabezado: bool` | `orden-dia`, `acta-anterior`, `asuntos-generales` (ver "Puntos fijos") |
 | `remitentes` | — | `pleno`, `presidencia`, `secretaria-general` |
+
+**Orden de `listarPuntos`:** fijos de `posicion: 'inicio'` → puntos registrados de secciones sin `alFinal` (por `orden`) → fijos de `posicion: 'final'` → puntos registrados de secciones con `alFinal` (por `orden`). Así los asuntos generales quedan después de su título.
 
 Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interfaz (menú, textos, íconos).
 

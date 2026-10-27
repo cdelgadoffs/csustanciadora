@@ -33,8 +33,8 @@ function tieneContenido(f) {
 
 export default function FormularioPunto() {
   const { SECCIONES_DOCUMENTO, REMITENTES, PUNTOS, agregarPunto, editarPunto, eliminarArchivo, descargarArchivo, guardarBorrador, obtenerBorrador, eliminarBorrador, error: errorCarga } = useProyecto();
-  const { sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId } = useUI();
-  const seccionUnica = SECCIONES_DOCUMENTO[0]?.id || '';
+  const { sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId, seccionNuevoPunto } = useUI();
+  const seccionUnica = seccionNuevoPunto || SECCIONES_DOCUMENTO[0]?.id || '';
   const [form, setForm] = useState(() => estadoVacio(seccionUnica));
   const [restaurado, setRestaurado] = useState(false);
   const [enviando, setEnviando] = useState(false);

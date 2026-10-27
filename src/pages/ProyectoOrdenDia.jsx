@@ -15,16 +15,17 @@ import MenuPanelControl, { AccionesHeaderPanelControl } from '../components/widg
 import { useUI, ANCHO_SIDEBAR3, ALTO_TOPBAR, ALTO_CINTA } from '../context/UIContext.jsx';
 import { useProyecto } from '../context/ProyectoContext.jsx';
 import { encabezadoSesion } from '../utils/sesiones.js';
+import { tituloFormularioPunto } from '../utils/puntos.js';
 import '../styles/pages/ProyectoOrdenDia.css';
 
 export default function ProyectoOrdenDia() {
   const {
     izquierdaSidebar1, izquierdaSidebar3,
-    sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId,
+    sidebar3Abierto, cerrarSidebar3, puntoEnEdicionId, seccionNuevoPunto,
     sidebar5Abierto, cerrarSidebar5,
     sidebar5Ancho,
   } = useUI();
-  const { sesionSeleccionada, sesionFinalizada, listaCerrada } = useProyecto();
+  const { sesionSeleccionada, sesionFinalizada, listaCerrada, SECCIONES_DOCUMENTO } = useProyecto();
   const sesionActual = encabezadoSesion(sesionSeleccionada);
   const panelIzquierda = izquierdaSidebar3 + (sidebar3Abierto ? ANCHO_SIDEBAR3 : 0);
   const arriba = ALTO_TOPBAR + ALTO_CINTA;
@@ -53,7 +54,7 @@ export default function ProyectoOrdenDia() {
         abierto={sidebar3Abierto}
         izquierda={izquierdaSidebar3}
         arriba={arribaSidebar}
-        badge={puntoEnEdicionId ? 'Editar asunto' : 'Nuevo asunto'}
+        badge={tituloFormularioPunto(SECCIONES_DOCUMENTO, seccionNuevoPunto, !!puntoEnEdicionId)}
         onCerrar={cerrarSidebar3}
       >
         <FormularioPunto />

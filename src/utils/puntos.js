@@ -26,8 +26,12 @@ export function textoPunto(punto) {
   return `Aprobación de las actas de la ${reuniones} reuniones celebradas el ${dias}${anio ? `, ${todas} de ${anio}` : ''}`;
 }
 
+export function numeroConPunto(numero) {
+  return String(numero).includes('.') ? String(numero) : `${numero}.`;
+}
+
 export function tituloPunto(numero, punto) {
-  return `${numero}. ${textoPunto(punto)}`;
+  return `${numeroConPunto(numero)} ${textoPunto(punto)}`;
 }
 
 export function etiquetaAsunto(numero) {
@@ -35,7 +39,27 @@ export function etiquetaAsunto(numero) {
 }
 
 export function puntosNumerados(puntos) {
-  return puntos.map((punto, i) => ({ punto, numero: i + 1, titulo: tituloPunto(i + 1, punto) }));
+  let principal = 0;
+  let subpunto = 0;
+  let dentroDeTitulo = false;
+  return puntos.map((punto) => {
+    let numero;
+    if (dentroDeTitulo && !punto.fijo) {
+      subpunto += 1;
+      numero = `${principal}.${subpunto}`;
+    } else {
+      principal += 1;
+      subpunto = 0;
+      dentroDeTitulo = !!punto.encabezado;
+      numero = principal;
+    }
+    return { punto, numero, titulo: tituloPunto(numero, punto) };
+  });
+}
+
+export function tituloFormularioPunto(secciones, seccionId, editando) {
+  const nombre = (secciones.find((s) => s.id === (seccionId || secciones[0]?.id))?.nombre || 'asunto').toLowerCase();
+  return `${editando ? 'Editar' : 'Nuevo'} ${nombre}`;
 }
 
 export function normalizarTexto(texto) {

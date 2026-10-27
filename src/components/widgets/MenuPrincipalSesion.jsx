@@ -14,11 +14,10 @@ const VISTAS_MENU_PRINCIPAL = [
 
 export default function MenuPrincipalSesion() {
   const { PUNTOS, listaCerrada } = useProyecto();
-  const { vistaActual, setVistaActual, setSidebar3Abierto, setPuntoEnEdicionId, terminoBusqueda } = useUI();
+  const { vistaActual, setVistaActual, abrirNuevoPunto, terminoBusqueda } = useUI();
 
   function agregarPunto() {
-    setPuntoEnEdicionId(null);
-    setSidebar3Abierto(true);
+    abrirNuevoPunto();
   }
 
   return (

@@ -79,6 +79,14 @@ function buscarSeccion(catalogos, id) {
   return (catalogos.secciones || []).find((s) => s.id === id);
 }
 
+export function admiteConListaCerrada(catalogos, secciones) {
+  return secciones.every((id) => !!buscarSeccion(catalogos, id)?.admiteConListaCerrada);
+}
+
+export function vaAlFinal(catalogos, punto) {
+  return !!buscarSeccion(catalogos, punto.seccion)?.alFinal;
+}
+
 export function validarPunto(p, catalogos) {
   const seccion = buscarSeccion(catalogos, p.seccion);
   if (!seccion) throw new ApiError('VALIDACION', 'Sección inválida.');

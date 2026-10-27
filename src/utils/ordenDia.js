@@ -40,7 +40,7 @@ export async function generarWordOrdenDia({ sesion, puntos }) {
     ['Hora de inicio', horaDoce(sesion.horaProgramada) ?? raya],
     ['Hora de término', horaDoce(sesion.horaTermino) ?? raya],
     ['Número de asuntos', String(puntos.length)],
-    ['Asuntos agregados', raya],
+    ['Asuntos agregados', String(puntos.filter((p) => !p.fijo).length)],
   ];
 
   const sinBorde = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
@@ -72,15 +72,29 @@ export async function generarWordOrdenDia({ sesion, puntos }) {
     children: [corrida(`ORDEN DEL DÍA DE LA ${tituloReunion(sesion)} DE ${fechaDelTitulo(sesion)}`, { bold: true, size: 22 })],
   });
 
-  const celda = (texto, { ancho, negrita = false, centrado = false, fondo } = {}) => new TableCell({
+  const celda = (texto, { ancho, negrita = false, centrado = false, fondo, subpuntos = [] } = {}) => new TableCell({
     width: { size: ancho, type: WidthType.DXA },
     verticalAlign: VerticalAlign.CENTER,
     margins: { top: 80, bottom: 80, left: 100, right: 100 },
     ...(fondo ? { shading: { type: ShadingType.CLEAR, color: 'auto', fill: fondo } } : null),
-    children: [new Paragraph({
-      alignment: centrado ? AlignmentType.CENTER : AlignmentType.LEFT,
-      children: [corrida(texto, { bold: negrita })],
-    })],
+    children: [
+      new Paragraph({
+        alignment: centrado ? AlignmentType.CENTER : AlignmentType.LEFT,
+        children: [corrida(texto, { bold: negrita })],
+      }),
+      ...subpuntos.map(({ numero, texto: textoSub }) => new Paragraph({
+        spacing: { before: 80 },
+        children: [corrida(`${numero} `, { bold: true }), corrida(textoSub)],
+      })),
+    ],
+  });
+
+  const textoFila = (punto) => (punto.confidencial ? 'CONFIDENCIAL' : textoPunto(punto));
+  const grupos = [];
+  puntosNumerados(puntos).forEach(({ punto, numero }) => {
+    const esSubpunto = String(numero).includes('.');
+    if (esSubpunto && grupos.length > 0) grupos[grupos.length - 1].subpuntos.push({ numero, texto: textoFila(punto) });
+    else grupos.push({ punto, numero, subpuntos: [] });
   });
 
   const filas = [
@@ -91,10 +105,10 @@ export async function generarWordOrdenDia({ sesion, puntos }) {
         celda('Punto de Acuerdo', { ancho: ANCHO_UTIL - ANCHO_NUMERO, negrita: true, centrado: true, fondo: FONDO_ENCABEZADO }),
       ],
     }),
-    ...puntosNumerados(puntos).map(({ punto, numero }) => new TableRow({
+    ...grupos.map(({ punto, numero, subpuntos }) => new TableRow({
       children: [
         celda(String(numero), { ancho: ANCHO_NUMERO, negrita: true, centrado: true }),
-        celda(punto.confidencial ? 'CONFIDENCIAL' : textoPunto(punto), { ancho: ANCHO_UTIL - ANCHO_NUMERO, negrita: punto.encabezado }),
+        celda(textoFila(punto), { ancho: ANCHO_UTIL - ANCHO_NUMERO, negrita: punto.encabezado, subpuntos }),
       ],
     })),
   ];

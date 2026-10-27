@@ -19,6 +19,7 @@ export function UIProvider({ children }) {
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
   const [vistaActual, setVistaActualEstado] = useState('inicio');
   const [puntoEnEdicionId, setPuntoEnEdicionId] = useState(null);
+  const [seccionNuevoPunto, setSeccionNuevoPunto] = useState(null);
   const [puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId] = useState(null);
   const [archivoEnVista, setArchivoEnVista] = useState(null);
   const [elementoNavegador, setElementoNavegador] = useState(null);
@@ -30,8 +31,14 @@ export function UIProvider({ children }) {
     if (sidebar5Abierto) setPanelControlActivo(null);
     setSidebar5Abierto((a) => !a);
   }
-  function abrirEdicionPunto(id) {
+  function abrirEdicionPunto(id, seccion = null) {
     setPuntoEnEdicionId(id);
+    setSeccionNuevoPunto(seccion);
+    setSidebar3Abierto(true);
+  }
+  function abrirNuevoPunto(seccion = null) {
+    setPuntoEnEdicionId(null);
+    setSeccionNuevoPunto(seccion);
     setSidebar3Abierto(true);
   }
   function cerrarSidebar3() {
@@ -69,7 +76,7 @@ export function UIProvider({ children }) {
     mostrarFormularioCalendario, setMostrarFormularioCalendario,
     terminoBusqueda, setTerminoBusqueda,
     vistaActual, setVistaActual,
-    puntoEnEdicionId, setPuntoEnEdicionId, abrirEdicionPunto,
+    puntoEnEdicionId, setPuntoEnEdicionId, abrirEdicionPunto, seccionNuevoPunto, abrirNuevoPunto,
     puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId,
     archivoEnVista, abrirVistaArchivo, cerrarVistaArchivo,
     elementoNavegador, setElementoNavegador,

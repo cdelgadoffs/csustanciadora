@@ -1,6 +1,7 @@
 export const CATALOGOS_SEMILLA = {
   secciones: [
     { id: 'asuntos', nombre: 'Asunto', requiereAcuerdo: false },
+    { id: 'asuntos-generales', nombre: 'Asunto general', requiereAcuerdo: false, admiteConListaCerrada: true, alFinal: true },
   ],
   puntosFijos: [
     { id: 'orden-dia', texto: 'Orden del día', posicion: 'inicio', condicion: 'siempre', encabezado: false },

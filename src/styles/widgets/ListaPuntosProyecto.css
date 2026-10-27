@@ -8,6 +8,10 @@
   padding: 24px 32px;
 }
 .widget-lista-puntos-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font-size: 15px;
   font-weight: 700;
   text-transform: uppercase;
@@ -144,4 +148,16 @@
 }
 .widget-lista-puntos-item-seleccionado .widget-lista-puntos-header {
   background: #e3ecfd;
+}
+
+.widget-lista-puntos-encabezado:hover .base-boton-agregar,
+.widget-lista-puntos-encabezado:focus-within .base-boton-agregar {
+  width: 18px;
+  opacity: 1;
+}
+@media (hover: none) {
+  .widget-lista-puntos-encabezado .base-boton-agregar {
+    width: 18px;
+    opacity: 1;
+  }
 }

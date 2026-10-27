@@ -1,5 +1,5 @@
 import { MESES } from './meses.js';
-import { puntosNumerados, textoPunto, fechasAgrupadas } from './puntos.js';
+import { puntosNumerados, textoPunto, fechasAgrupadas, numeroConPunto } from './puntos.js';
 import { ordinalFemenino } from './numerosOrdinales.js';
 import { fechaEnLetras, horaEnLetras } from './numerosEnLetras.js';
 
@@ -44,7 +44,8 @@ function cuerpoPunto(punto, sesion, puntos) {
   if (punto.encabezado) return [];
   if (punto.fijo && punto.clave === 'orden-dia') {
     if (!punto.tratado) return [SIN_DELIBERACION];
-    const asuntos = puntos.filter((p) => !p.fijo).length;
+    const cierre = puntos.findIndex((p) => p.encabezado);
+    const asuntos = (cierre === -1 ? puntos : puntos.slice(0, cierre)).filter((p) => !p.fijo).length;
     return [`Se aprobó en sus términos con ${asuntos} ${asuntos === 1 ? 'asunto' : 'asuntos'} y asuntos generales.`];
   }
   if (punto.fijo && punto.actas?.length) return [punto.tratado ? textoActasAprobadas(punto, sesion) : SIN_DELIBERACION];
@@ -85,7 +86,7 @@ export async function generarWordActa({ sesion, puntos }) {
       spacing: { before: 240, after: 160, line: 300 },
       indent: { left: 567, hanging: 567 },
       tabStops: [{ type: TabStopType.LEFT, position: 567 }],
-      children: [corrida(`${numero}.\t${conPunto(punto.confidencial ? 'CONFIDENCIAL' : textoPunto(punto))}`, { bold: true })],
+      children: [corrida(`${numeroConPunto(numero)}\t${conPunto(punto.confidencial ? 'CONFIDENCIAL' : textoPunto(punto))}`, { bold: true })],
     }),
     ...cuerpoPunto(punto, sesion, puntos).map((texto) => parrafo([corrida(texto)])),
   ]);

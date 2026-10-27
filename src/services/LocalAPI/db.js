@@ -2,7 +2,7 @@ import { ApiError } from '../ApiError.js';
 import { CATALOGOS_SEMILLA } from './semilla.js';
 
 const DB_NAME = 'LocalAPI';
-const DB_VERSION = 9;
+const DB_VERSION = 10;
 
 export const STORE_SESIONES = 'sesiones';
 export const STORE_PUNTOS = 'puntos';
@@ -87,6 +87,9 @@ function conectar() {
       }
       if (evento.oldVersion < 9 && evento.oldVersion > 0) {
         req.transaction.objectStore(STORE_CATALOGOS).put({ nombre: 'puntosFijos', items: CATALOGOS_SEMILLA.puntosFijos });
+      }
+      if (evento.oldVersion < 10 && evento.oldVersion > 0) {
+        req.transaction.objectStore(STORE_CATALOGOS).put({ nombre: 'secciones', items: CATALOGOS_SEMILLA.secciones });
       }
     };
     req.onsuccess = () => {

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Card from '../base/Card.jsx';
 import IndicadorSync from '../base/IndicadorSync.jsx';
 import BadgeDinamico from '../base/BadgeDinamico.jsx';
+import BotonAgregar from '../base/BotonAgregar.jsx';
 import OpcionesAUD from './OpcionesAUD.jsx';
 import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
@@ -62,35 +63,45 @@ function TarjetaPunto({ punto, titulo, requiereAcuerdo, nombreRemitente, opcione
   );
 }
 
-function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones, onAbrir, sesion, seleccionadoId, seleccionar, termino) {
-  const deLaSeccion = puntos.filter((p) => p.seccion === seccion.id);
-  if (deLaSeccion.length === 0) {
+function listaDePuntos({ puntos, secciones, remitentes, estadoCarga, renderOpciones, onAbrir, sesion, seleccionadoId, seleccionar, termino, onAgregarAlFinal }) {
+  if (puntos.length === 0) {
     if (estadoCarga === 'error') return null;
     if (estadoCarga === 'cargando') return <div className="widget-lista-puntos-vacio">Cargando…</div>;
     return <div className="widget-lista-puntos-vacio">Sin asuntos registrados.</div>;
   }
-  const registrados = deLaSeccion.filter((p) => !p.fijo);
-  const vacio = registrados.length === 0 && estadoCarga === 'listo' && (
+  const seccionDe = (p) => secciones.find((s) => s.id === p.seccion);
+  const registradosDe = (seccionId) => puntos.filter((p) => !p.fijo && p.seccion === seccionId);
+  const sinAsuntos = puntos.every((p) => p.fijo || seccionDe(p)?.alFinal) && estadoCarga === 'listo' && (
     <div key="vacio" className="widget-lista-puntos-vacio">Sin asuntos registrados.</div>
   );
   const numeros = new Map(puntosNumerados(puntos).map(({ punto, titulo }) => [punto.id, titulo]));
-  const visibles = termino ? deLaSeccion.filter((p) => !p.encabezado && puntoCoincide(p, termino)) : deLaSeccion;
+  const visibles = termino ? puntos.filter((p) => !p.encabezado && puntoCoincide(p, termino)) : puntos;
   if (termino && visibles.length === 0) {
     return <div className="widget-lista-puntos-vacio">Sin coincidencias para «{termino}».</div>;
   }
   const elementos = visibles.map((p) => {
     if (p.encabezado) {
-      return <div key={p.id} className="widget-lista-puntos-encabezado">{numeros.get(p.id)}</div>;
+      return (
+        <div key={p.id} className="widget-lista-puntos-encabezado">
+          <span>{numeros.get(p.id)}</span>
+          {onAgregarAlFinal && (
+            <span>
+              <BotonAgregar onClick={onAgregarAlFinal}>+</BotonAgregar>
+            </span>
+          )}
+        </div>
+      );
     }
-    const i = registrados.indexOf(p);
+    const seccion = seccionDe(p);
+    const grupo = p.fijo ? [] : registradosDe(p.seccion);
     return (
       <TarjetaPunto
         key={p.id}
         punto={p}
         titulo={numeros.get(p.id)}
-        requiereAcuerdo={seccion.requiereAcuerdo}
+        requiereAcuerdo={seccion ? seccion.requiereAcuerdo : false}
         nombreRemitente={remitentes.find((r) => r.id === p.remitente)?.nombre ?? p.remitente}
-        opciones={p.fijo ? null : renderOpciones(p, i, registrados, seccion.id)}
+        opciones={p.fijo ? null : renderOpciones(p, grupo.indexOf(p), grupo, seccion)}
         archivos={[...archivosAutomaticos(p, sesion), ...(p.archivos || [])]}
         onAbrir={onAbrir}
         seleccionada={seleccionadoId === p.id}
@@ -99,7 +110,7 @@ function listaDeSeccion(puntos, seccion, remitentes, estadoCarga, renderOpciones
     );
   });
   const indiceCierre = visibles.findIndex((p) => p.encabezado);
-  if (vacio && !termino) elementos.splice(indiceCierre === -1 ? elementos.length : indiceCierre, 0, vacio);
+  if (sinAsuntos && !termino) elementos.splice(indiceCierre === -1 ? elementos.length : indiceCierre, 0, sinAsuntos);
   return elementos;
 }
 
@@ -107,7 +118,7 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
   const { PUNTOS: puntos, SECCIONES_DOCUMENTO, REMITENTES, sesionSeleccionada, sesionFinalizada, listaCerrada, reordenarPuntos, cargando, error } = useProyecto();
   const [errorAccion, setErrorAccion] = useState(null);
   const [moviendo, setMoviendo] = useState(false);
-  const { terminoBusqueda, puntoDestinoProyecto, abrirVistaArchivo } = useUI();
+  const { terminoBusqueda, puntoDestinoProyecto, abrirVistaArchivo, abrirNuevoPunto } = useUI();
   const [seleccionadoId, setSeleccionadoId] = useState(puntoDestinoProyecto);
   const destinoDesplazado = useRef(null);
   const seleccionar = setSeleccionadoId;
@@ -140,39 +151,49 @@ export default function ListaPuntosProyecto({ opcionesOcultas = [], opcionesExtr
     }
   }
   const termino = terminoBusqueda.trim();
-  const ocultas = [
-    ...opcionesOcultas,
-    ...(listaCerrada ? ['mover', 'editar', 'eliminar'] : []),
-    ...(termino ? ['mover'] : []),
-  ];
-  const renderOpciones = (punto, indice, deLaSeccion, seccionId) => (sesionFinalizada ? null : (
-    <>
-      {deLaSeccion.length > 1 && !ocultas.includes('mover') && (
-        <OpcionesNavegacion
-          orientacion="vertical"
-          onAnterior={() => mover(seccionId, deLaSeccion, indice, -1)}
-          onSiguiente={() => mover(seccionId, deLaSeccion, indice, 1)}
-          anteriorDeshabilitado={moviendo || indice === 0}
-          siguienteDeshabilitado={moviendo || indice === deLaSeccion.length - 1}
-          etiquetaAnterior="Subir punto"
-          etiquetaSiguiente="Bajar punto"
-        />
-      )}
-      <OpcionesAUD punto={punto} ocultar={ocultas}>
-        {opcionesExtra && opcionesExtra(punto)}
-      </OpcionesAUD>
-    </>
-  ));
+  const renderOpciones = (punto, indice, deLaSeccion, seccion) => {
+    if (sesionFinalizada) return null;
+    const ocultas = [
+      ...opcionesOcultas,
+      ...(listaCerrada && !seccion?.admiteConListaCerrada ? ['mover', 'editar', 'eliminar'] : []),
+      ...(termino ? ['mover'] : []),
+    ];
+    const seccionId = seccion?.id;
+    return (
+      <>
+        {deLaSeccion.length > 1 && !ocultas.includes('mover') && (
+          <OpcionesNavegacion
+            orientacion="vertical"
+            onAnterior={() => mover(seccionId, deLaSeccion, indice, -1)}
+            onSiguiente={() => mover(seccionId, deLaSeccion, indice, 1)}
+            anteriorDeshabilitado={moviendo || indice === 0}
+            siguienteDeshabilitado={moviendo || indice === deLaSeccion.length - 1}
+            etiquetaAnterior="Subir punto"
+            etiquetaSiguiente="Bajar punto"
+          />
+        )}
+        <OpcionesAUD punto={punto} ocultar={ocultas}>
+          {opcionesExtra && opcionesExtra(punto)}
+        </OpcionesAUD>
+      </>
+    );
+  };
 
-  const seccion = SECCIONES_DOCUMENTO[0];
+  const seccionAlFinal = SECCIONES_DOCUMENTO.find((sec) => sec.alFinal);
+  const onAgregarAlFinal = seccionAlFinal && !sesionFinalizada && !termino && sesionSeleccionada
+    ? () => abrirNuevoPunto(seccionAlFinal.id)
+    : null;
 
   return (
     <div className="widget-lista-puntos-proyecto">
       {avisoError}
-      {seccion ? listaDeSeccion(puntos, seccion, REMITENTES, estadoCarga, renderOpciones, abrirVistaArchivo, sesionSeleccionada, seleccionadoId, seleccionar, termino) : (
+      {SECCIONES_DOCUMENTO.length > 0 ? listaDePuntos({
+        puntos, secciones: SECCIONES_DOCUMENTO, remitentes: REMITENTES, estadoCarga, renderOpciones,
+        onAbrir: abrirVistaArchivo, sesion: sesionSeleccionada, seleccionadoId, seleccionar, termino, onAgregarAlFinal,
+      }) : (
         estadoCarga === 'listo' && <div className="widget-lista-puntos-vacio">Sin secciones definidas.</div>
       )}
-      {!seccion && estadoCarga === 'cargando' && <div className="widget-lista-puntos-vacio">Cargando…</div>}
+      {SECCIONES_DOCUMENTO.length === 0 && estadoCarga === 'cargando' && <div className="widget-lista-puntos-vacio">Cargando…</div>}
     </div>
   );
 }

@@ -43,7 +43,7 @@ function entradasDe(punto) {
 
 export function archivosAutomaticos(punto, sesion) {
   if (!punto?.fijo) return [];
-  if (punto.clave === 'orden-dia') return [...archivoOrdenDia(sesion), ...archivoActa(sesion)];
+  if (punto.clave === 'orden-dia') return archivoOrdenDia(sesion);
   return actasDeSesionesAnteriores(punto);
 }
 
