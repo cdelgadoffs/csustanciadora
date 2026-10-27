@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import {
   listarCatalogos, listarSesiones, crearSesiones,
   establecerListaCerrada as establecerListaCerradaEnApi,
-  programarHora as programarHoraEnApi, programarHoraTermino as programarHoraTerminoEnApi,
+  programarHora as programarHoraEnApi, agregarInvitado as agregarInvitadoEnApi, eliminarInvitado as eliminarInvitadoEnApi, editarInvitado as editarInvitadoEnApi, programarHoraTermino as programarHoraTerminoEnApi,
   listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi,
   guardarDeliberacion as guardarDeliberacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
@@ -24,7 +24,7 @@ const cachePuntos = (sesionId) => `puntos:${sesionId}`;
 const conEtiqueta = (sesiones) => sesiones.map((s) => ({ ...s, label: etiquetaFecha(s.id) }));
 const conSync = (punto) => ({ ...punto, sincronizacion: 'servidor' });
 
-const CATALOGOS_VACIOS = { secciones: [], remitentes: [] };
+const CATALOGOS_VACIOS = { secciones: [], remitentes: [], generos: [], gradosAcademicos: [] };
 
 export function ProyectoProvider({ children }) {
   const [fechasSesiones, setFechasSesiones] = useState([]);
@@ -127,6 +127,19 @@ export function ProyectoProvider({ children }) {
     await programarHoraTerminoEnApi(sesionActivaFecha, hora);
     aplicarSesiones(await listarSesiones());
   }
+  async function agregarInvitado(datos) {
+    const sesion = await agregarInvitadoEnApi(sesionActivaFecha, datos);
+    aplicarSesiones(await listarSesiones());
+    return sesion;
+  }
+  async function editarInvitado(invitadoId, datos) {
+    await editarInvitadoEnApi(sesionActivaFecha, invitadoId, datos);
+    aplicarSesiones(await listarSesiones());
+  }
+  async function eliminarInvitado(invitadoId) {
+    await eliminarInvitadoEnApi(sesionActivaFecha, invitadoId);
+    aplicarSesiones(await listarSesiones());
+  }
   async function establecerListaCerrada(cerrada) {
     await establecerListaCerradaEnApi(sesionActivaFecha, cerrada);
     aplicarSesiones(await listarSesiones());
@@ -202,6 +215,8 @@ export function ProyectoProvider({ children }) {
   const value = {
     sesionSeleccionada,
     SECCIONES_DOCUMENTO: catalogos.secciones, REMITENTES: catalogos.remitentes,
+    GENEROS: catalogos.generos, GRADOS_ACADEMICOS: catalogos.gradosAcademicos,
+    INVITADOS: sesionSeleccionada?.invitados ?? [], agregarInvitado, editarInvitado, eliminarInvitado,
     FECHAS_SESIONES: fechasSesiones,
     sesionActivaFecha, cargarSesion,
     sesionFinalizada, programarHora, programarHoraTermino,

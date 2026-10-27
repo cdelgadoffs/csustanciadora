@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import ListaExpandible from '../base/ListaExpandible.jsx';
 import Textarea from '../base/Textarea.jsx';
 import Checkbox from '../base/Checkbox.jsx';
+import CampoTexto from '../base/CampoTexto.jsx';
 import BotonS from '../base/BotonS.jsx';
 import BotonIcono from '../base/BotonIcono.jsx';
 import BadgeDinamico from '../base/BadgeDinamico.jsx';
@@ -16,6 +17,7 @@ function estadoVacio(seccion) {
   return {
     seccion: seccion || '',
     remitente: '',
+    remitenteOtro: '',
     contenido: '',
     acuerdo: '',
     confidencial: false,
@@ -42,6 +44,8 @@ export default function FormularioPunto() {
   const [archivoAQuitar, setArchivoAQuitar] = useState(null);
   const [errorQuitar, setErrorQuitar] = useState(null);
   const claveGuardadaRef = useRef(null);
+  const asuntoRef = useRef(null);
+  const remitenteOtroRef = useRef(null);
   const { contenedorRef, thumb, onScroll, onArrastrarThumb } = useScrollbarPersonalizada();
   const punto = puntoEnEdicionId ? PUNTOS.find((p) => p.id === puntoEnEdicionId) : null;
   const editando = !!punto;
@@ -49,6 +53,10 @@ export default function FormularioPunto() {
   useEffect(() => {
     if (puntoEnEdicionId && !punto) cerrarSidebar3();
   }, [puntoEnEdicionId, punto]);
+
+  useEffect(() => {
+    if (sidebar3Abierto) asuntoRef.current?.querySelector('textarea')?.focus({ preventScroll: true });
+  }, [sidebar3Abierto, puntoEnEdicionId, seccionUnica]);
 
   useEffect(() => {
     if (!sidebar3Abierto) return;
@@ -60,6 +68,7 @@ export default function FormularioPunto() {
         setForm({
           seccion: original.seccion,
           remitente: original.remitente,
+          remitenteOtro: original.remitenteOtro ?? '',
           contenido: original.contenido,
           acuerdo: original.acuerdo,
           confidencial: original.confidencial,
@@ -102,6 +111,7 @@ export default function FormularioPunto() {
   const seccionActual = SECCIONES_DOCUMENTO.find((s) => s.id === form.seccion);
   const esInforme = seccionActual ? !seccionActual.requiereAcuerdo : false;
   const remitenteActual = REMITENTES.some((r) => r.id === form.remitente) ? form.remitente : (REMITENTES[0]?.id || '');
+  const remitenteLibre = !!REMITENTES.find((r) => r.id === remitenteActual)?.admiteTextoLibre;
 
   function actualizar(campo, valor) {
     setForm((f) => ({ ...f, [campo]: valor }));
@@ -157,6 +167,7 @@ export default function FormularioPunto() {
       const datos = {
         seccion: form.seccion,
         remitente: remitenteActual,
+        remitenteOtro: remitenteLibre ? form.remitenteOtro.trim() : '',
         contenido: form.contenido.trim(),
         acuerdo: esInforme ? '' : form.acuerdo.trim(),
         confidencial: form.confidencial,
@@ -175,22 +186,29 @@ export default function FormularioPunto() {
     }
   }
 
-  const puedeConfirmar = !enviando && !!seccionActual && !!remitenteActual && form.contenido.trim().length > 0 && (esInforme || form.acuerdo.trim().length > 0);
+  const puedeConfirmar = !enviando && !!seccionActual && !!remitenteActual && (!remitenteLibre || form.remitenteOtro.trim().length > 0) && form.contenido.trim().length > 0 && (esInforme || form.acuerdo.trim().length > 0);
 
   return (
     <div className="widget-formulario-punto-wrap">
       <div className="widget-formulario-punto" ref={contenedorRef} onScroll={onScroll}>
       <div className="widget-formulario-punto-fila">
-        <div className="widget-formulario-punto-campo">
+        <div className="widget-formulario-punto-campo widget-formulario-punto-remitente">
           <label className="widget-formulario-punto-label">Remitente</label>
           <ListaExpandible
             valorActual={remitenteActual}
-            etiquetaActual={REMITENTES.find((r) => r.id === remitenteActual)?.nombre ?? ''}
+            etiquetaActual={(() => {
+              const r = REMITENTES.find((x) => x.id === remitenteActual);
+              return r ? (r.siglas ?? r.nombre) : '';
+            })()}
             opciones={REMITENTES.map((r) => ({ id: r.id, label: r.nombre }))}
-            onSeleccionar={(id) => actualizar('remitente', id)}
+            onSeleccionar={(id) => {
+              actualizar('remitente', id);
+              if (REMITENTES.find((r) => r.id === id)?.admiteTextoLibre) {
+                requestAnimationFrame(() => remitenteOtroRef.current?.querySelector('input')?.focus());
+              }
+            }}
           />
         </div>
-      </div>
 
       {(!editando || punto.archivos.length > 0) && (
         <div className="widget-formulario-punto-campo">
@@ -230,8 +248,19 @@ export default function FormularioPunto() {
           )}
         </div>
       )}
+      </div>
 
-      <div className="widget-formulario-punto-campo">
+      {remitenteLibre && (
+        <div className="widget-formulario-punto-campo" ref={remitenteOtroRef}>
+          <CampoTexto
+            value={form.remitenteOtro}
+            onChange={(v) => actualizar('remitenteOtro', v)}
+            placeholder="Escribe el remitente"
+          />
+        </div>
+      )}
+
+      <div className="widget-formulario-punto-campo" ref={asuntoRef}>
         <label className="widget-formulario-punto-label">{esInforme ? 'Asunto' : 'Punto de acuerdo'}</label>
         <Textarea
           value={form.contenido}

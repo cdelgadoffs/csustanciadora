@@ -1,6 +1,7 @@
 .widget-formulario-punto-wrap {
   position: relative;
-  flex: 1;
+  flex: 0 1 auto;
+  min-height: 0;
   overflow: hidden;
   display: flex;
 }
@@ -42,6 +43,10 @@
 }
 .widget-formulario-punto-fila .widget-formulario-punto-campo {
   flex: 1;
+  min-width: 0;
+}
+.widget-formulario-punto-fila .widget-formulario-punto-remitente {
+  flex: 0 0 150px;
 }
 .widget-formulario-punto-campo {
   flex-shrink: 0;

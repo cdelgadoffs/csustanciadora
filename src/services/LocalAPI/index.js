@@ -8,7 +8,7 @@ import {
   validarFechasISO, calcularEstados,
   camposPunto, validarPunto, normalizarPunto,
   validarArchivos, prepararArchivos,
-  validarDeliberacion, validarHoraDelDia, validarOrdenHorario, estaCelebrada, admiteConListaCerrada, validarAgregadoEnSesion, vaAlFinal, esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos,
+  validarDeliberacion, validarInvitado, validarHoraDelDia, validarOrdenHorario, estaCelebrada, admiteConListaCerrada, validarAgregadoEnSesion, vaAlFinal, esPuntoFijo, exigirNoFijo, analizarPuntoFijo, generarPuntosFijos,
 } from './reglas.js';
 
 async function exigirSesionAbierta(sesionId) {
@@ -83,6 +83,38 @@ export async function programarHoraTermino(id, hora) {
     await guardar(STORE_SESIONES, { ...sesion, horaTermino: valor, version: sesion.version + 1 });
   }
   return (await listarSesiones()).find((s) => s.id === id);
+}
+
+export async function agregarInvitado(sesionId, datos) {
+  exigirEscritura();
+  const sesion = await exigirSesionAbierta(sesionId);
+  const invitados = sesion.invitados || [];
+  const invitado = { id: crypto.randomUUID(), ...validarInvitado(datos, await listarCatalogos(), invitados) };
+  await guardar(STORE_SESIONES, { ...sesion, invitados: [...invitados, invitado], version: sesion.version + 1 });
+  return (await listarSesiones()).find((s) => s.id === sesionId);
+}
+
+export async function editarInvitado(sesionId, invitadoId, datos) {
+  exigirEscritura();
+  const sesion = await exigirSesionAbierta(sesionId);
+  const invitados = sesion.invitados || [];
+  if (!invitados.some((i) => i.id === invitadoId)) throw new ApiError('NO_ENCONTRADO', 'El invitado no existe.');
+  const cambios = validarInvitado(datos, await listarCatalogos(), invitados.filter((i) => i.id !== invitadoId));
+  await guardar(STORE_SESIONES, {
+    ...sesion,
+    invitados: invitados.map((i) => (i.id === invitadoId ? { ...i, ...cambios } : i)),
+    version: sesion.version + 1,
+  });
+  return (await listarSesiones()).find((s) => s.id === sesionId);
+}
+
+export async function eliminarInvitado(sesionId, invitadoId) {
+  exigirEscritura();
+  const sesion = await exigirSesionAbierta(sesionId);
+  const invitados = sesion.invitados || [];
+  if (!invitados.some((i) => i.id === invitadoId)) throw new ApiError('NO_ENCONTRADO', 'El invitado no existe.');
+  await guardar(STORE_SESIONES, { ...sesion, invitados: invitados.filter((i) => i.id !== invitadoId), version: sesion.version + 1 });
+  return (await listarSesiones()).find((s) => s.id === sesionId);
 }
 
 function sinPosicion(punto) {

@@ -6,7 +6,7 @@ import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import OpcionesAUD from './OpcionesAUD.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
-import { puntosOrdenados, puntoActivo } from '../../utils/puntos.js';
+import { puntosOrdenados, puntoActivo, nombreRemitente } from '../../utils/puntos.js';
 import { estiloArchivo } from '../../utils/archivos.js';
 import { archivosAutomaticos } from '../../utils/arbolArchivos.js';
 import '../../styles/widgets/PuntoSesion.css';
@@ -86,7 +86,7 @@ export default function PuntoSesion() {
   const indice = items.indexOf(activo);
   const irA = (delta) => setPuntoSesionSeleccionadoId(items[indice + delta].punto.id);
   const esInforme = !seccion.requiereAcuerdo;
-  const nombreRemitente = REMITENTES.find((r) => r.id === punto.remitente)?.nombre ?? punto.remitente;
+  const remitente = nombreRemitente(punto, REMITENTES, { corto: true });
 
   return (
     <div className={'widget-punto-sesion' + (punto.tratado ? ' widget-punto-sesion-tratado' : '')}>
@@ -95,7 +95,7 @@ export default function PuntoSesion() {
           <span className={'widget-punto-sesion-titulo' + (punto.confidencial ? ' widget-punto-sesion-titulo-confidencial' : '')}>
             {titulo}
           </span>
-          {nombreRemitente && <span className="widget-punto-sesion-dependencia">{nombreRemitente}</span>}
+          {remitente && <span className="widget-punto-sesion-dependencia">{remitente}</span>}
         </div>
         {!punto.fijo && (
           <>

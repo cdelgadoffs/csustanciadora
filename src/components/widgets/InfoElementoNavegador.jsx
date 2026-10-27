@@ -3,7 +3,7 @@ import { useUI } from '../../context/UIContext.jsx';
 import { carpetasDeSesion } from '../../utils/arbolArchivos.js';
 import { formatoTamano } from '../../utils/archivos.js';
 import { encabezadoSesion } from '../../utils/sesiones.js';
-import { puntosNumerados } from '../../utils/puntos.js';
+import { puntosNumerados, nombreRemitente } from '../../utils/puntos.js';
 import '../../styles/widgets/InfoElementoNavegador.css';
 
 const ESTADOS = { celebrada: 'Celebrada', proxima: 'Próxima', pendiente: 'Pendiente', 'no-celebrada': 'No celebrada' };
@@ -47,7 +47,7 @@ export default function InfoElementoNavegador() {
 
   const numerado = puntosNumerados(PUNTOS).find(({ punto }) => punto.id === seleccion.puntoId);
   const punto = numerado?.punto;
-  const remitente = punto && !punto.fijo ? (REMITENTES.find((r) => r.id === punto.remitente)?.nombre ?? punto.remitente) : null;
+  const remitente = punto && !punto.fijo ? nombreRemitente(punto, REMITENTES) : null;
   const esCarpeta = seleccion.tipo === 'carpeta';
 
   return (

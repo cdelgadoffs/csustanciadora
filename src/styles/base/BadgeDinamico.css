@@ -63,6 +63,7 @@
 .base-badge-dinamico-boton:hover .base-badge-dinamico-texto {
   text-decoration: underline;
 }
+.base-badge-dinamico-editar,
 .base-badge-dinamico-quitar {
   flex-shrink: 0;
   padding: 0 0 0 2px;
@@ -76,6 +77,14 @@
   opacity: 0.65;
   transition: opacity 0.15s;
 }
+.base-badge-dinamico-editar:hover,
 .base-badge-dinamico-quitar:hover {
   opacity: 1;
+}
+.base-badge-dinamico-editar {
+  display: inline-flex;
+  align-items: center;
+}
+.base-badge-dinamico-editar i {
+  font-size: 12px;
 }

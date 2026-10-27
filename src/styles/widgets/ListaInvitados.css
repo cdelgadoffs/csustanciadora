@@ -1,0 +1,40 @@
+.widget-lista-invitados {
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+.widget-lista-invitados-titulo {
+  padding: 12px 16px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #777;
+}
+.widget-lista-invitados-vacio {
+  padding: 4px 16px;
+  color: #aaa;
+  font-size: 13px;
+  font-style: italic;
+}
+.widget-lista-invitados .base-boton-seleccionable-menu > span:nth-child(2) {
+  min-width: 0;
+}
+.widget-lista-invitados-nombre {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.widget-lista-invitados-mujer .base-boton-seleccionable-menu:hover,
+.widget-lista-invitados-mujer .base-boton-seleccionable-menu-activo {
+  background: #f1eafd;
+  border-left-color: #6a3fc1;
+  color: #6a3fc1;
+}
+.widget-lista-invitados-grado {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #777;
+}

@@ -8,7 +8,7 @@ import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { estiloArchivo } from '../../utils/archivos.js';
 import { archivosAutomaticos } from '../../utils/arbolArchivos.js';
-import { puntosNumerados, puntoCoincide } from '../../utils/puntos.js';
+import { puntosNumerados, puntoCoincide, nombreRemitente } from '../../utils/puntos.js';
 import { useUI } from '../../context/UIContext.jsx';
 import '../../styles/widgets/ListaPuntosProyecto.css';
 
@@ -100,7 +100,7 @@ function listaDePuntos({ puntos, secciones, remitentes, estadoCarga, renderOpcio
         punto={p}
         titulo={numeros.get(p.id)}
         requiereAcuerdo={seccion ? seccion.requiereAcuerdo : false}
-        nombreRemitente={remitentes.find((r) => r.id === p.remitente)?.nombre ?? p.remitente}
+        nombreRemitente={nombreRemitente(p, remitentes, { corto: true })}
         opciones={p.fijo ? null : renderOpciones(p, grupo.indexOf(p), grupo, seccion)}
         archivos={[...archivosAutomaticos(p, sesion), ...(p.archivos || [])]}
         onAbrir={onAbrir}

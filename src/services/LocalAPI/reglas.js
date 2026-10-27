@@ -1,6 +1,6 @@
 import { ApiError } from '../ApiError.js';
 
-const CAMPOS_PUNTO = ['seccion', 'remitente', 'contenido', 'acuerdo', 'confidencial'];
+const CAMPOS_PUNTO = ['seccion', 'remitente', 'remitenteOtro', 'contenido', 'acuerdo', 'confidencial'];
 const MAX_TEXTO = 20000;
 const MAX_BYTES_ARCHIVO = 100 * 1024 * 1024;
 const MAX_ARCHIVOS_PUNTO = 30;
@@ -62,6 +62,7 @@ export function calcularEstados(sesiones) {
       listaCerrada: !!s.listaCerrada,
       horaProgramada: s.horaProgramada || null,
       horaTermino: s.horaTermino || null,
+      invitados: s.invitados || [],
       version: s.version,
     };
   });
@@ -90,9 +91,13 @@ export function vaAlFinal(catalogos, punto) {
 export function validarPunto(p, catalogos) {
   const seccion = buscarSeccion(catalogos, p.seccion);
   if (!seccion) throw new ApiError('VALIDACION', 'Sección inválida.');
-  if (!(catalogos.remitentes || []).some((r) => r.id === p.remitente)) {
-    throw new ApiError('VALIDACION', 'Remitente inválido.');
-  }
+  const remitente = (catalogos.remitentes || []).find((r) => r.id === p.remitente);
+  if (!remitente) throw new ApiError('VALIDACION', 'Remitente inválido.');
+  const otro = typeof p.remitenteOtro === 'string' ? p.remitenteOtro.trim() : '';
+  if (p.remitenteOtro !== undefined && typeof p.remitenteOtro !== 'string') throw new ApiError('VALIDACION', 'El remitente debe ser texto.');
+  if (remitente.admiteTextoLibre && !otro) throw new ApiError('VALIDACION', 'Escribe el remitente.');
+  if (!remitente.admiteTextoLibre && otro) throw new ApiError('VALIDACION', 'Este remitente no admite texto libre.');
+  if (otro.length > 200) throw new ApiError('VALIDACION', 'El remitente es demasiado largo.');
   if (typeof p.contenido !== 'string' || p.contenido.trim().length === 0) {
     throw new ApiError('VALIDACION', 'El contenido es obligatorio.');
   }
@@ -148,6 +153,7 @@ export function normalizarPunto(p, catalogos) {
   return {
     seccion: p.seccion,
     remitente: p.remitente,
+    remitenteOtro: typeof p.remitenteOtro === 'string' ? p.remitenteOtro.trim().replace(/\s+/g, ' ') : '',
     contenido: p.contenido.trim(),
     acuerdo: seccion.requiereAcuerdo ? (p.acuerdo || '').trim() : '',
     confidencial: p.confidencial,
@@ -221,4 +227,17 @@ export function validarOrdenHorario(inicio, termino) {
   if (inicio && termino && inicio > termino) {
     throw new ApiError('HORARIO_INVALIDO', 'La hora de inicio no puede ser posterior a la hora de término.');
   }
+}
+
+const MAX_NOMBRE_INVITADO = 200;
+const MAX_INVITADOS = 50;
+
+export function validarInvitado(datos, catalogos, existentes) {
+  const nombre = typeof datos?.nombre === 'string' ? datos.nombre.trim().replace(/\s+/g, ' ').toLocaleLowerCase('es-MX').replace(/(^|[\s-])(\p{L})/gu, (_, sep, letra) => sep + letra.toLocaleUpperCase('es-MX')) : '';
+  if (!nombre) throw new ApiError('VALIDACION', 'Escribe el nombre del invitado.');
+  if (nombre.length > MAX_NOMBRE_INVITADO) throw new ApiError('VALIDACION', 'El nombre del invitado es demasiado largo.');
+  if (!(catalogos.generos || []).some((g) => g.id === datos.genero)) throw new ApiError('VALIDACION', 'Elige el género del invitado.');
+  if (!(catalogos.gradosAcademicos || []).some((g) => g.id === datos.grado)) throw new ApiError('VALIDACION', 'Elige el grado académico del invitado.');
+  if (existentes.length >= MAX_INVITADOS) throw new ApiError('VALIDACION', `Una sesión admite como máximo ${MAX_INVITADOS} invitados.`);
+  return { nombre, genero: datos.genero, grado: datos.grado };
 }

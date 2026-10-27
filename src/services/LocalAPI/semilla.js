@@ -9,8 +9,17 @@ export const CATALOGOS_SEMILLA = {
     { id: 'asuntos-generales', texto: 'Asuntos Generales', posicion: 'final', condicion: 'siempre', encabezado: true },
   ],
   remitentes: [
-    { id: 'pleno', nombre: 'Pleno' },
-    { id: 'presidencia', nombre: 'Presidencia' },
-    { id: 'secretaria-general', nombre: 'Secretaría General' },
+    { id: 'oaj', nombre: 'Órgano de Administración Judicial (OAJ)', siglas: 'OAJ' },
+    { id: 'tdj', nombre: 'Tribunal de Disciplina Judicial (TDJ)', siglas: 'TDJ' },
+    { id: 'otro', nombre: 'Otro', admiteTextoLibre: true },
+  ],
+  generos: [
+    { id: 'mujer', nombre: 'Mujer' },
+    { id: 'hombre', nombre: 'Hombre' },
+  ],
+  gradosAcademicos: [
+    { id: 'licenciatura', nombre: 'Licenciatura', femenino: 'Licenciada', masculino: 'Licenciado', abreviaturaFemenino: 'Lic.', abreviaturaMasculino: 'Lic.' },
+    { id: 'maestria', nombre: 'Maestría', femenino: 'Maestra', masculino: 'Maestro', abreviaturaFemenino: 'Mtra.', abreviaturaMasculino: 'Mtro.' },
+    { id: 'doctorado', nombre: 'Doctorado', femenino: 'Doctora', masculino: 'Doctor', abreviaturaFemenino: 'Dra.', abreviaturaMasculino: 'Dr.' },
   ],
 };

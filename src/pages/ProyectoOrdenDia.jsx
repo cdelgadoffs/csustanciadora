@@ -8,6 +8,8 @@ import MenuPrincipalSesion from '../components/widgets/MenuPrincipalSesion.jsx';
 import BotonCerrarLista from '../components/widgets/BotonCerrarLista.jsx';
 import BotonDescargar from '../components/widgets/BotonDescargar.jsx';
 import HorasCelebracion from '../components/widgets/HorasCelebracion.jsx';
+import FormularioInvitado from '../components/widgets/FormularioInvitado.jsx';
+import ListaInvitados from '../components/widgets/ListaInvitados.jsx';
 import FormularioPunto from '../components/widgets/FormularioPunto.jsx';
 import VisorArchivo from '../components/widgets/VisorArchivo.jsx';
 import ListaPuntosProyecto from '../components/widgets/ListaPuntosProyecto.jsx';
@@ -49,6 +51,7 @@ export default function ProyectoOrdenDia() {
       >
         <MenuPrincipalSesion />
         <HorasCelebracion />
+        <ListaInvitados />
       </Sidebar1>
       <Sidebar3
         abierto={sidebar3Abierto}
@@ -58,6 +61,7 @@ export default function ProyectoOrdenDia() {
         onCerrar={cerrarSidebar3}
       >
         <FormularioPunto />
+        <FormularioInvitado />
       </Sidebar3>
       <Sidebar5
         abierto={sidebar5Abierto}

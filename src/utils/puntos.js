@@ -6,6 +6,14 @@ function diaYMes(iso) {
   return `${dia} de ${MESES[mes - 1].toLowerCase()}`;
 }
 
+export function nombreRemitente(punto, remitentes, { corto = false } = {}) {
+  if (!punto.remitente) return null;
+  const remitente = remitentes.find((r) => r.id === punto.remitente);
+  if (!remitente) return punto.remitente;
+  if (remitente.admiteTextoLibre) return punto.remitenteOtro || remitente.nombre;
+  return (corto && remitente.siglas) || remitente.nombre;
+}
+
 export function enumerar(textos) {
   return textos.length > 1 ? `${textos.slice(0, -1).join(', ')} y ${textos[textos.length - 1]}` : textos[0];
 }

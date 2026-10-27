@@ -1,0 +1,78 @@
+.widget-formulario-invitado {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid #d0d0d0;
+}
+.widget-formulario-invitado-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.widget-formulario-invitado-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.widget-formulario-invitado-grados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.widget-formulario-invitado-nombre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.widget-formulario-invitado-nombre .base-boton-agregar {
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  font-size: 16px;
+  opacity: 1;
+}
+.widget-formulario-invitado-error {
+  font-size: 12px;
+  color: #c62828;
+}
+.widget-formulario-invitado-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.widget-formulario-invitado-acciones-grupo {
+  display: flex;
+  gap: 8px;
+}
+.widget-formulario-invitado-eliminar button:hover {
+  color: #c62828;
+  border-color: #f5c2c0;
+  background: #fdecea;
+}
+.widget-formulario-invitado-recientes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.widget-formulario-invitado-item {
+  display: inline-flex;
+  max-width: 100%;
+  border-radius: 11px;
+}
+.widget-formulario-invitado-item-editando {
+  box-shadow: 0 0 0 2px #1a56db;
+}
+.widget-formulario-invitado-mensaje {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+}
+.widget-formulario-invitado-modal-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
