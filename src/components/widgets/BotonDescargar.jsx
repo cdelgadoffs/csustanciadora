@@ -14,7 +14,7 @@ const DOCUMENTOS = {
 
 export default function BotonDescargar({ documento = 'ordenDia' }) {
   const { texto, generar } = DOCUMENTOS[documento];
-  const { sesionSeleccionada, PUNTOS } = useProyecto();
+  const { sesionSeleccionada, PUNTOS, INTEGRANTES, GRADOS_ACADEMICOS } = useProyecto();
   const [generando, setGenerando] = useState(false);
   const [error, setError] = useState(null);
 
@@ -22,7 +22,7 @@ export default function BotonDescargar({ documento = 'ordenDia' }) {
     setGenerando(true);
     setError(null);
     try {
-      const { blob, nombreArchivo } = await generar({ sesion: sesionSeleccionada, puntos: PUNTOS });
+      const { blob, nombreArchivo } = await generar({ sesion: sesionSeleccionada, puntos: PUNTOS, integrantes: INTEGRANTES, grados: GRADOS_ACADEMICOS });
       guardarEnDisco(nombreArchivo, blob);
     } catch (e) {
       setError(`No se pudo generar el documento Word: ${e.message || 'error desconocido'}`);

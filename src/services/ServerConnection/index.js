@@ -13,6 +13,7 @@ export const editarPunto = () => noImplementado();
 export const establecerListaCerrada = () => noImplementado();
 export const programarHoraTermino = () => noImplementado();
 export const programarHora = () => noImplementado();
+export const obtenerEstadisticas = () => noImplementado();
 export const agregarInvitado = () => noImplementado();
 export const editarInvitado = () => noImplementado();
 export const eliminarInvitado = () => noImplementado();

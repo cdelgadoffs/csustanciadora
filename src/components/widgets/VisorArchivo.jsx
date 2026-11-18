@@ -11,7 +11,7 @@ const SIN_CARGAR = { id: null, error: null, archivo: null, url: null, texto: '' 
 
 export default function VisorArchivo() {
   const { archivoEnVista, cerrarVistaArchivo } = useUI();
-  const { descargarArchivo, obtenerDatosSesion, sesionSeleccionada, PUNTOS } = useProyecto();
+  const { descargarArchivo, obtenerDatosSesion, sesionSeleccionada, PUNTOS, INTEGRANTES, GRADOS_ACADEMICOS } = useProyecto();
   const [estado, setEstado] = useState(SIN_CARGAR);
   const contenedorWord = useRef(null);
 
@@ -28,7 +28,7 @@ export default function VisorArchivo() {
     const otraSesion = archivoEnVista.sesionId && archivoEnVista.sesionId !== sesionSeleccionada?.id;
     const obtener = generar
       ? (otraSesion ? obtenerDatosSesion(archivoEnVista.sesionId) : Promise.resolve({ sesion: sesionSeleccionada, puntos: PUNTOS }))
-        .then(generar)
+        .then((datos) => generar({ ...datos, integrantes: INTEGRANTES, grados: GRADOS_ACADEMICOS }))
         .then(({ blob, nombreArchivo }) => ({ nombre: nombreArchivo, tipo: archivoEnVista.tipo, blob }))
       : descargarArchivo(idEnVista);
     obtener

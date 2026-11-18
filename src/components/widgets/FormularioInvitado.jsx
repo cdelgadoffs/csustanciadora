@@ -8,7 +8,7 @@ import BotonS from '../base/BotonS.jsx';
 import Modal from '../base/Modal.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
-import { tituloInvitado, tratamientoInvitado } from '../../utils/invitados.js';
+import { tituloInvitado, tratamientoInvitado, nombrePropio } from '../../utils/invitados.js';
 import '../../styles/widgets/FormularioInvitado.css';
 
 const ESTILO_GENERO = {
@@ -18,10 +18,11 @@ const ESTILO_GENERO = {
 
 export default function FormularioInvitado() {
   const { sesionSeleccionada, sesionFinalizada, GENEROS, GRADOS_ACADEMICOS, INVITADOS, agregarInvitado, editarInvitado, eliminarInvitado } = useProyecto();
-  const { sidebar3Abierto, invitadoEnEdicionId, setInvitadoEnEdicionId } = useUI();
+  const { sidebar3Abierto, invitadoEnEdicionId, setInvitadoEnEdicionId, enfoqueNombreInvitado } = useUI();
   const [genero, setGenero] = useState(null);
   const [grado, setGrado] = useState(null);
   const [nombre, setNombre] = useState('');
+  const [cargo, setCargo] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState(null);
   const [agregadosAhora, setAgregadosAhora] = useState([]);
@@ -33,6 +34,10 @@ export default function FormularioInvitado() {
   function enfocarNombre() {
     nombreRef.current?.querySelector('input')?.focus();
   }
+
+  useEffect(() => {
+    if (enfoqueNombreInvitado) requestAnimationFrame(enfocarNombre);
+  }, [enfoqueNombreInvitado]);
 
   useEffect(() => {
     if (!sidebar3Abierto) setAgregadosAhora([]);
@@ -51,6 +56,7 @@ export default function FormularioInvitado() {
     setGenero(enEdicion?.genero ?? null);
     setGrado(enEdicion?.grado ?? null);
     setNombre(enEdicion?.nombre ?? '');
+    setCargo(enEdicion?.cargo ?? '');
     if (enEdicion) enfocarNombre();
   }, [invitadoEnEdicionId, !!enEdicion]);
 
@@ -71,7 +77,7 @@ export default function FormularioInvitado() {
     setEnviando(true);
     setError(null);
     try {
-      const datos = { nombre, genero: generoActual.id, grado };
+      const datos = { nombre, genero: generoActual.id, grado, cargo };
       if (enEdicion) {
         await editarInvitado(enEdicion.id, datos);
         setInvitadoEnEdicionId(null);
@@ -81,6 +87,7 @@ export default function FormularioInvitado() {
         const nuevos = (sesion?.invitados ?? []).filter((i) => !anteriores.has(i.id)).map((i) => i.id);
         setAgregadosAhora((ids) => [...ids, ...nuevos]);
         setNombre('');
+        setCargo('');
         setGrado(null);
       }
     } catch (e) {
@@ -132,7 +139,15 @@ export default function FormularioInvitado() {
         ))}
       </div>
       <div className="widget-formulario-invitado-nombre" ref={nombreRef}>
-        <CampoTexto value={nombre} onChange={setNombre} onEnter={guardar} placeholder="Nombre del invitado" />
+        <div className="widget-formulario-invitado-campos">
+          <CampoTexto
+            value={nombre}
+            onChange={(v) => setNombre(nombrePropio(v))}
+            onEnter={guardar}
+            placeholder={generoActual.id === 'mujer' ? 'Nombre de la invitada' : 'Nombre del invitado'}
+          />
+          <CampoTexto value={cargo} onChange={setCargo} onEnter={guardar} placeholder="Cargo (opcional)" />
+        </div>
         {!enEdicion && <BotonAgregar onClick={guardar}>+</BotonAgregar>}
       </div>
       {enEdicion && (

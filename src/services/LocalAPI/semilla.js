@@ -8,6 +8,10 @@ export const CATALOGOS_SEMILLA = {
     { id: 'acta-anterior', texto: 'Aprobación de actas', posicion: 'inicio', condicion: 'actasPendientes', encabezado: false },
     { id: 'asuntos-generales', texto: 'Asuntos Generales', posicion: 'final', condicion: 'siempre', encabezado: true },
   ],
+  integrantes: [
+    { id: 'secretario-ejecutivo-oaj', tratamiento: 'Maestro', nombre: 'César Mauricio López Ramírez', genero: 'hombre', cargo: 'Secretario Ejecutivo del Pleno del Órgano de Administración Judicial' },
+    { id: 'secretario-general-tdj', tratamiento: 'Doctor', nombre: 'Gonzalo Martínez García', genero: 'hombre', cargo: 'Secretario General de Acuerdos del Tribunal de Disciplina Judicial' },
+  ],
   remitentes: [
     { id: 'oaj', nombre: 'Órgano de Administración Judicial (OAJ)', siglas: 'OAJ' },
     { id: 'tdj', nombre: 'Tribunal de Disciplina Judicial (TDJ)', siglas: 'TDJ' },

@@ -1,4 +1,5 @@
 import BotonSeleccionableMenu from '../base/BotonSeleccionableMenu.jsx';
+import BotonAgregar from '../base/BotonAgregar.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
 import { tituloInvitado } from '../../utils/invitados.js';
@@ -6,14 +7,15 @@ import '../../styles/widgets/ListaInvitados.css';
 
 export default function ListaInvitados() {
   const { sesionSeleccionada, sesionFinalizada, INVITADOS, GRADOS_ACADEMICOS } = useProyecto();
-  const { invitadoEnEdicionId, abrirEdicionInvitado } = useUI();
+  const { invitadoEnEdicionId, abrirEdicionInvitado, abrirNuevoInvitado } = useUI();
 
   if (!sesionSeleccionada) return null;
 
   return (
     <div className="widget-lista-invitados">
       <div className="widget-lista-invitados-titulo">
-        Invitados{INVITADOS.length > 0 ? ` (${INVITADOS.length})` : ''}
+        <span>Invitados{INVITADOS.length > 0 ? ` (${INVITADOS.length})` : ''}</span>
+        {!sesionFinalizada && <BotonAgregar onClick={abrirNuevoInvitado}>+</BotonAgregar>}
       </div>
       {INVITADOS.length === 0 && <div className="widget-lista-invitados-vacio">Sin invitados registrados.</div>}
       {INVITADOS.map((i) => {
@@ -25,7 +27,7 @@ export default function ListaInvitados() {
             onClick={sesionFinalizada ? undefined : () => abrirEdicionInvitado(i.id)}
           >
             <span className="widget-lista-invitados-nombre">{i.nombre}</span>
-            {activo && <span className="widget-lista-invitados-grado">{tituloInvitado(i, GRADOS_ACADEMICOS)}</span>}
+            {activo && <span className="widget-lista-invitados-grado">{[tituloInvitado(i, GRADOS_ACADEMICOS), i.cargo].filter(Boolean).join(' · ')}</span>}
           </BotonSeleccionableMenu>
           </div>
         );

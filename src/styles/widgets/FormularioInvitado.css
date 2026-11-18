@@ -26,8 +26,22 @@
 }
 .widget-formulario-invitado-nombre {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
+}
+.widget-formulario-invitado-campos {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 6px;
+}
+.widget-formulario-invitado-campos .base-campo-texto {
+  flex: 1 1 0;
+  min-width: 0;
+  transition: flex-grow 0.25s ease, border-color 0.2s, box-shadow 0.2s;
+}
+.widget-formulario-invitado-campos .base-campo-texto:focus {
+  flex-grow: 3;
 }
 .widget-formulario-invitado-nombre .base-boton-agregar {
   width: 28px;

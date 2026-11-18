@@ -21,6 +21,7 @@ export function UIProvider({ children }) {
   const [puntoEnEdicionId, setPuntoEnEdicionId] = useState(null);
   const [seccionNuevoPunto, setSeccionNuevoPunto] = useState(null);
   const [invitadoEnEdicionId, setInvitadoEnEdicionId] = useState(null);
+  const [enfoqueNombreInvitado, setEnfoqueNombreInvitado] = useState(0);
   const [nuevoPuntoEnSesion, setNuevoPuntoEnSesion] = useState(false);
   const [puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId] = useState(null);
   const [archivoEnVista, setArchivoEnVista] = useState(null);
@@ -44,6 +45,11 @@ export function UIProvider({ children }) {
     setSeccionNuevoPunto(seccion);
     setNuevoPuntoEnSesion(agregadoEnSesion);
     setSidebar3Abierto(true);
+  }
+  function abrirNuevoInvitado() {
+    if (!sidebar3Abierto) abrirNuevoPunto();
+    setInvitadoEnEdicionId(null);
+    setEnfoqueNombreInvitado((n) => n + 1);
   }
   function abrirEdicionInvitado(id) {
     if (!sidebar3Abierto) abrirNuevoPunto();
@@ -86,7 +92,7 @@ export function UIProvider({ children }) {
     mostrarFormularioCalendario, setMostrarFormularioCalendario,
     terminoBusqueda, setTerminoBusqueda,
     vistaActual, setVistaActual,
-    invitadoEnEdicionId, setInvitadoEnEdicionId, abrirEdicionInvitado,
+    invitadoEnEdicionId, setInvitadoEnEdicionId, abrirEdicionInvitado, abrirNuevoInvitado, enfoqueNombreInvitado,
     puntoEnEdicionId, setPuntoEnEdicionId, abrirEdicionPunto, seccionNuevoPunto, nuevoPuntoEnSesion, abrirNuevoPunto,
     puntoSesionSeleccionadoId, setPuntoSesionSeleccionadoId,
     archivoEnVista, abrirVistaArchivo, cerrarVistaArchivo,

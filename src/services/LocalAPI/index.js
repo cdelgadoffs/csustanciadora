@@ -133,6 +133,23 @@ export async function establecerListaCerrada(id, cerrada) {
   return (await listarSesiones()).find((s) => s.id === id);
 }
 
+export async function obtenerEstadisticas() {
+  const celebradas = (await listarSesiones()).filter((s) => s.celebrada);
+  const verConfidencial = puedeVerConfidencial();
+  const catalogos = await listarCatalogos();
+  const visibles = (await obtenerTodos(STORE_PUNTOS)).filter((p) => verConfidencial || !p.confidencial);
+  const relevantes = [];
+  const sesiones = celebradas.map((s) => {
+    const propios = visibles.filter((p) => p.sesionId === s.id).sort(porOrden);
+    const ordenados = [...propios.filter((p) => !vaAlFinal(catalogos, p)), ...propios.filter((p) => vaAlFinal(catalogos, p))];
+    ordenados.filter((p) => p.relevante).forEach((p) => relevantes.push({
+      id: p.id, sesionId: s.id, contenido: p.contenido, contenidoFormato: p.contenidoFormato ?? null,
+    }));
+    return { id: s.id, numeroSesion: s.numeroSesion, asuntos: propios.length };
+  });
+  return { sesiones, relevantes };
+}
+
 export async function listarPuntos(sesionId) {
   const sesiones = await obtenerTodos(STORE_SESIONES);
   const sesion = sesiones.find((s) => s.id === sesionId);

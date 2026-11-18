@@ -30,9 +30,9 @@ export function textoPunto(punto) {
   if (actas.length === 0) return punto.contenido || 'Sin contenido';
   const reuniones = enumerar(actas.map((a) => ordinalFemenino(a.numeroSesion)));
   const { dias, anio } = fechasAgrupadas(actas.map((a) => a.fecha));
-  if (actas.length === 1) return `Aprobación del acta de la ${reuniones} reunión celebrada el ${dias}${anio ? ` de ${anio}` : ''}`;
+  if (actas.length === 1) return `Aprobación del acta de la ${reuniones} reunión del ${dias}${anio ? ` de ${anio}` : ''}`;
   const todas = actas.length === 2 ? 'ambas' : 'todas';
-  return `Aprobación de las actas de la ${reuniones} reuniones celebradas el ${dias}${anio ? `, ${todas} de ${anio}` : ''}`;
+  return `Aprobación de las actas de la ${reuniones} reuniones del ${dias}${anio ? `, ${todas} de ${anio}` : ''}`;
 }
 
 export function partesPunto(punto) {

@@ -8,5 +8,10 @@ export function tituloInvitado(invitado, grados, { abreviado = false } = {}) {
 
 export function tratamientoInvitado(invitado, grados) {
   const titulo = tituloInvitado(invitado, grados);
-  return titulo ? `${titulo} ${invitado.nombre}` : invitado.nombre;
+  const nombre = titulo ? `${titulo} ${invitado.nombre}` : invitado.nombre;
+  return invitado.cargo ? `${nombre}, ${invitado.cargo}` : nombre;
+}
+
+export function nombrePropio(texto) {
+  return texto.toLocaleLowerCase('es-MX').replace(/(^|[\s-])(\p{L})/gu, (_, sep, letra) => sep + letra.toLocaleUpperCase('es-MX'));
 }

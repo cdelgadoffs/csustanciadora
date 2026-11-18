@@ -32,7 +32,7 @@ export function nombreArchivoOrdenDia(sesion) {
 export async function generarWordOrdenDia({ sesion, puntos: todos }) {
   const puntos = todos.filter((p) => !p.agregadoEnSesion);
   const {
-    Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, ShadingType, BorderStyle, VerticalAlign, PageOrientation,
+    Document, Packer, Paragraph, TextRun, AlignmentType, Table, TableRow, TableCell, WidthType, ShadingType, BorderStyle, VerticalAlign, PageOrientation, TabStopType,
   } = await import('docx');
 
   const corrida = (text, extra = {}) => new TextRun({ text, size: 20, color: '000000', font: 'Arial', ...extra });
@@ -73,12 +73,17 @@ export async function generarWordOrdenDia({ sesion, puntos: todos }) {
     children: [corrida(`ORDEN DEL DÍA DE LA ${tituloReunion(sesion)} DE ${fechaDelTitulo(sesion)}`, { bold: true, size: 22 })],
   });
 
-  const corridas = (partes, extra = {}) => partes.map((p) => corrida(p.texto, {
+  const VINETA = 300;
+  const NUMERO_SUB = 500;
+  const corridas = (partes, extra = {}) => partes.map((p) => corrida(p.vineta ? '•	' : p.texto, {
     ...extra,
     bold: extra.bold || p.negrita,
     italics: p.cursiva,
     ...(p.subrayado ? { underline: {} } : null),
   }));
+  const formatoLinea = (linea, base) => (linea[0]?.vineta
+    ? { indent: { left: base + VINETA, hanging: VINETA }, tabStops: [{ type: TabStopType.LEFT, position: base + VINETA }] }
+    : { indent: { left: base } });
   const celda = (texto, { ancho, negrita = false, centrado = false, fondo, subpuntos = [], partes } = {}) => new TableCell({
     width: { size: ancho, type: WidthType.DXA },
     verticalAlign: VerticalAlign.CENTER,
@@ -87,11 +92,15 @@ export async function generarWordOrdenDia({ sesion, puntos: todos }) {
     children: [
       ...(partes ?? [[{ texto }]]).map((linea) => new Paragraph({
         alignment: centrado ? AlignmentType.CENTER : AlignmentType.LEFT,
+        ...formatoLinea(linea, 0),
         children: corridas(linea, { bold: negrita }),
       })),
       ...subpuntos.flatMap(({ numero, partes: partesSub }) => partesSub.map((linea, i) => new Paragraph({
         spacing: { before: i === 0 ? 80 : 0 },
-        children: [...(i === 0 ? [corrida(`${numero} `, { bold: true })] : []), ...corridas(linea)],
+        ...(i === 0 && !linea[0]?.vineta
+          ? { indent: { left: NUMERO_SUB, hanging: NUMERO_SUB }, tabStops: [{ type: TabStopType.LEFT, position: NUMERO_SUB }] }
+          : formatoLinea(linea, NUMERO_SUB)),
+        children: [...(i === 0 ? [corrida(`${numero}	`, { bold: true })] : []), ...corridas(linea)],
       }))),
     ],
   });

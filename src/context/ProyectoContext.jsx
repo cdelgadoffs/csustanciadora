@@ -3,7 +3,7 @@ import {
   listarCatalogos, listarSesiones, crearSesiones,
   establecerListaCerrada as establecerListaCerradaEnApi,
   programarHora as programarHoraEnApi, agregarInvitado as agregarInvitadoEnApi, eliminarInvitado as eliminarInvitadoEnApi, editarInvitado as editarInvitadoEnApi, programarHoraTermino as programarHoraTerminoEnApi,
-  listarPuntos, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi,
+  listarPuntos, obtenerEstadisticas, crearPunto, reordenarPuntos as reordenarPuntosEnApi, marcarPunto as marcarPuntoEnApi, marcarPuntos as marcarPuntosEnApi,
   guardarDeliberacion as guardarDeliberacionEnApi,
   editarPunto as editarPuntoEnApi, eliminarPunto as eliminarPuntoEnApi,
   adjuntarArchivos as adjuntarArchivosEnApi, eliminarArchivo as eliminarArchivoEnApi,
@@ -24,13 +24,14 @@ const cachePuntos = (sesionId) => `puntos:${sesionId}`;
 const conEtiqueta = (sesiones) => sesiones.map((s) => ({ ...s, label: etiquetaFecha(s.id) }));
 const conSync = (punto) => ({ ...punto, sincronizacion: 'servidor' });
 
-const CATALOGOS_VACIOS = { secciones: [], remitentes: [], generos: [], gradosAcademicos: [] };
+const CATALOGOS_VACIOS = { secciones: [], integrantes: [], remitentes: [], generos: [], gradosAcademicos: [] };
 
 export function ProyectoProvider({ children }) {
   const [fechasSesiones, setFechasSesiones] = useState([]);
   const [sesionActivaFecha, setSesionActivaFecha] = useState(null);
   const [puntos, setPuntos] = useState([]);
   const [catalogos, setCatalogos] = useState(CATALOGOS_VACIOS);
+  const [estadisticas, setEstadisticas] = useState({ datos: null, cargando: false, error: null });
   const [cargas, setCargas] = useState({ catalogos: { cargando: true }, sesiones: { cargando: true }, puntos: {} });
 
   function marcarCarga(recurso, estado) {
@@ -201,6 +202,15 @@ export function ProyectoProvider({ children }) {
     if (!sesion) throw new Error('La sesión ya no existe.');
     return { sesion, puntos: await listarPuntos(sesionId) };
   }
+  async function cargarEstadisticas() {
+    setEstadisticas((e) => ({ ...e, cargando: true, error: null }));
+    try {
+      const datos = await obtenerEstadisticas();
+      setEstadisticas({ datos, cargando: false, error: null });
+    } catch (e) {
+      setEstadisticas((actual) => ({ ...actual, cargando: false, error: e }));
+    }
+  }
   function descargarArchivo(archivoId) {
     return descargarArchivoEnApi(archivoId);
   }
@@ -215,7 +225,7 @@ export function ProyectoProvider({ children }) {
   const value = {
     sesionSeleccionada,
     SECCIONES_DOCUMENTO: catalogos.secciones, REMITENTES: catalogos.remitentes,
-    GENEROS: catalogos.generos, GRADOS_ACADEMICOS: catalogos.gradosAcademicos,
+    INTEGRANTES: catalogos.integrantes, GENEROS: catalogos.generos, GRADOS_ACADEMICOS: catalogos.gradosAcademicos,
     INVITADOS: sesionSeleccionada?.invitados ?? [], agregarInvitado, editarInvitado, eliminarInvitado,
     FECHAS_SESIONES: fechasSesiones,
     sesionActivaFecha, cargarSesion,
@@ -224,6 +234,7 @@ export function ProyectoProvider({ children }) {
     PUNTOS: puntos, agregarPunto, editarPunto, eliminarPunto, reordenarPuntos,
     marcarPunto, marcarTodosPuntos, guardarDeliberacion, adjuntarArchivos, eliminarArchivo, descargarArchivo, obtenerDatosSesion,
     agregarSesiones,
+    ESTADISTICAS: estadisticas, cargarEstadisticas,
     guardarBorrador, obtenerBorrador, eliminarBorrador,
     cargando, error,
   };

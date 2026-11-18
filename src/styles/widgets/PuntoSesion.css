@@ -154,3 +154,15 @@
 .widget-punto-sesion-titulo .base-texto-formato .base-texto-formato-negrita {
   font-weight: 700;
 }
+.widget-punto-sesion-titulo {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+.widget-punto-sesion-numero {
+  flex-shrink: 0;
+}
+.widget-punto-sesion-texto {
+  flex: 1;
+  min-width: 0;
+}

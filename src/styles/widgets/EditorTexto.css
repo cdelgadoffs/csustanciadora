@@ -44,3 +44,11 @@
 .widget-editor-texto-contenido strong {
   font-weight: 700;
 }
+.widget-editor-texto-contenido ul {
+  margin: 2px 0;
+  padding-left: 22px;
+  list-style: disc;
+}
+.widget-editor-texto-contenido li p {
+  margin: 0;
+}

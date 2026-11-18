@@ -6,7 +6,7 @@ import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import OpcionesAUD from './OpcionesAUD.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { useUI } from '../../context/UIContext.jsx';
-import { puntosOrdenados, puntoActivo, nombreRemitente, numeroConPunto } from '../../utils/puntos.js';
+import { puntosOrdenados, puntoActivo, nombreRemitente, numeroConPunto, textoPunto } from '../../utils/puntos.js';
 import { partesConFormato } from '../../utils/textoFormato.js';
 import TextoConFormato from '../base/TextoConFormato.jsx';
 import { estiloArchivo } from '../../utils/archivos.js';
@@ -84,7 +84,7 @@ export default function PuntoSesion() {
     return <div className="widget-punto-sesion"><div className="widget-punto-sesion-vacio">{mensaje}</div></div>;
   }
 
-  const { punto, seccion, numero, titulo } = activo;
+  const { punto, seccion, numero } = activo;
   const indice = items.indexOf(activo);
   const irA = (delta) => setPuntoSesionSeleccionadoId(items[indice + delta].punto.id);
   const esInforme = !seccion.requiereAcuerdo;
@@ -96,8 +96,8 @@ export default function PuntoSesion() {
         <div className="widget-punto-sesion-header">
           <span className={'widget-punto-sesion-titulo' + (punto.confidencial ? ' widget-punto-sesion-titulo-confidencial' : '')}>
             {punto.contenidoFormato
-              ? <>{numeroConPunto(numero)} <TextoConFormato parrafos={partesConFormato(punto.contenidoFormato)} /></>
-              : titulo}
+              ? <><span className="widget-punto-sesion-numero">{numeroConPunto(numero)}</span><span className="widget-punto-sesion-texto"><TextoConFormato parrafos={partesConFormato(punto.contenidoFormato)} /></span></>
+              : <><span className="widget-punto-sesion-numero">{numeroConPunto(numero)}</span><span className="widget-punto-sesion-texto">{textoPunto(punto)}</span></>}
           </span>
           {remitente && <span className="widget-punto-sesion-dependencia">{remitente}</span>}
         </div>

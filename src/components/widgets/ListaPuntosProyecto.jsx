@@ -8,7 +8,7 @@ import OpcionesNavegacion from './OpcionesNavegacion.jsx';
 import { useProyecto } from '../../context/ProyectoContext.jsx';
 import { estiloArchivo } from '../../utils/archivos.js';
 import { archivosAutomaticos } from '../../utils/arbolArchivos.js';
-import { puntosNumerados, puntoCoincide, nombreRemitente, numeroConPunto } from '../../utils/puntos.js';
+import { puntosNumerados, puntoCoincide, nombreRemitente, numeroConPunto, textoPunto } from '../../utils/puntos.js';
 import { partesConFormato } from '../../utils/textoFormato.js';
 import TextoConFormato from '../base/TextoConFormato.jsx';
 import { useUI } from '../../context/UIContext.jsx';
@@ -76,11 +76,11 @@ function listaDePuntos({ puntos, secciones, remitentes, estadoCarga, renderOpcio
   const sinAsuntos = puntos.every((p) => p.fijo || seccionDe(p)?.alFinal) && estadoCarga === 'listo' && (
     <div key="vacio" className="widget-lista-puntos-vacio">Sin asuntos registrados.</div>
   );
-  const numeros = new Map(puntosNumerados(puntos).map(({ punto, numero, titulo }) => [
+  const numeros = new Map(puntosNumerados(puntos).map(({ punto, numero }) => [
     punto.id,
     punto.contenidoFormato
-      ? <>{numeroConPunto(numero)} <TextoConFormato parrafos={partesConFormato(punto.contenidoFormato)} /></>
-      : titulo,
+      ? <><span className="widget-lista-puntos-numero">{numeroConPunto(numero)}</span><span className="widget-lista-puntos-texto"><TextoConFormato parrafos={partesConFormato(punto.contenidoFormato)} /></span></>
+      : <><span className="widget-lista-puntos-numero">{numeroConPunto(numero)}</span><span className="widget-lista-puntos-texto">{textoPunto(punto)}</span></>,
   ]));
   const visibles = termino ? puntos.filter((p) => !p.encabezado && puntoCoincide(p, termino)) : puntos;
   if (termino && visibles.length === 0) {

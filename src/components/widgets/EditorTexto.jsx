@@ -19,10 +19,7 @@ function extensiones(placeholder) {
       codeBlock: false,
       code: false,
       horizontalRule: false,
-      bulletList: false,
       orderedList: false,
-      listItem: false,
-      listKeymap: false,
       strike: false,
       link: false,
     }),
@@ -55,7 +52,10 @@ export default function EditorTexto({ value, onChange, placeholder, ariaLabel })
 
   const activas = useEditorState({
     editor,
-    selector: ({ editor: e }) => Object.fromEntries(BOTONES.map((b) => [b.marca, !!e?.isActive(b.marca)])),
+    selector: ({ editor: e }) => ({
+      ...Object.fromEntries(BOTONES.map((b) => [b.marca, !!e?.isActive(b.marca)])),
+      vinetas: !!e?.isActive('bulletList'),
+    }),
   }) ?? {};
 
   return (
@@ -71,6 +71,13 @@ export default function EditorTexto({ value, onChange, placeholder, ariaLabel })
             onClick={() => editor?.chain().focus().toggleMark(b.marca).run()}
           />
         ))}
+        <BotonIcono
+          icono="ri-list-unordered"
+          ariaLabel="Viñetas"
+          activo={activas.vinetas}
+          sinRobarFoco
+          onClick={() => editor?.chain().focus().toggleBulletList().run()}
+        />
       </div>
       <EditorContent editor={editor} />
     </div>

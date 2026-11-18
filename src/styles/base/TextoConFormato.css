@@ -7,3 +7,15 @@
 .base-texto-formato-subrayado {
   text-decoration: underline;
 }
+.base-texto-formato-linea {
+  display: block;
+}
+.base-texto-formato-linea-vineta {
+  padding-left: 18px;
+  text-indent: -12px;
+}
+.base-texto-formato-vineta {
+  display: inline-block;
+  width: 12px;
+  text-indent: 0;
+}

@@ -24,7 +24,7 @@ Todas las operaciones son asíncronas. Los datos viajan como JSON. Los errores t
 | `horaProgramada` | string \| null | Hora convocada de la reunión, escrita a mano (`"HH:MM"`), con `programarHora`. `null` si no se ha definido. |
 | `horaTermino` | string \| null | Hora de término de la reunión, escrita a mano (`"HH:MM"`), con `programarHoraTermino`. `null` si no se ha definido. |
 | `actasAprobadas` | string[] \| ausente | Solo en sesiones celebradas con la versión anterior del flujo (compatibilidad): ids de las sesiones cuya acta se aprobó en ella. Interno del servidor; no se entrega en `listarSesiones`. |
-| `invitados` | Invitado[] | Personas invitadas a la reunión (de la sesión, no de un punto). `[]` por omisión. Se cambian con `agregarInvitado`/`eliminarInvitado`. Cada uno: `{ id, nombre, genero, grado }`, con `genero` y `grado` como `id` de los catálogos `generos` y `gradosAcademicos`. |
+| `invitados` | Invitado[] | Personas invitadas a la reunión (de la sesión, no de un punto). `[]` por omisión. Se cambian con `agregarInvitado`/`eliminarInvitado`. Cada uno: `{ id, nombre, genero, grado, cargo }` (`cargo` opcional, texto de hasta 200 caracteres, `""` si no hay), con `genero` y `grado` como `id` de los catálogos `generos` y `gradosAcademicos`. |
 | `listaCerrada` | bool | Hecho persistido. `false` por omisión (las sesiones anteriores al campo se leen como `false`). Ver "Lista cerrada". |
 | `celebradaEn` | string \| null | Timestamp. |
 | `version` | int | |
@@ -39,7 +39,7 @@ Reglas de `estado` (con la fecha de hoy del servidor, entre sesiones ordenadas p
 | `sesionId` | string | Sesión a la que pertenece. Obligatorio. |
 | `seccion` | string | `id` de un elemento del catálogo `secciones`. |
 | `remitente` | string | `id` de un elemento del catálogo `remitentes`. |
-| `contenidoFormato` | object \| null | Contenido con formato (documento de TipTap/ProseMirror): `{ type: 'doc', content: Paragraph[] }`; cada párrafo con nodos `text` (marcas solo `bold`, `italic`, `underline`) y `hardBreak`. Si viene, el servidor lo limpia y **deriva `contenido`** (texto plano, párrafos separados por salto de línea); cualquier otro nodo o marca → `VALIDACION`. `null` en puntos sin formato (los anteriores). Al editar, enviar `contenido` sin `contenidoFormato` lo deja en `null`. |
+| `contenidoFormato` | object \| null | Contenido con formato (documento de TipTap/ProseMirror): `{ type: 'doc', content: (Paragraph | BulletList)[] }`; cada párrafo con nodos `text` (marcas solo `bold`, `italic`, `underline`) y `hardBreak`; `BulletList` = `{ type: 'bulletList', content: ListItem[] }` y `ListItem` = `{ type: 'listItem', content: Paragraph[] }` (viñetas de un solo nivel, sin listas anidadas). En el `contenido` derivado cada elemento de lista empieza con "• ". Si viene, el servidor lo limpia y **deriva `contenido`** (texto plano, párrafos separados por salto de línea); cualquier otro nodo o marca → `VALIDACION`. `null` en puntos sin formato (los anteriores). Al editar, enviar `contenido` sin `contenidoFormato` lo deja en `null`. |
 | `remitenteOtro` | string | Texto libre del remitente, **obligatorio** (1–200 caracteres) si el remitente elegido tiene `admiteTextoLibre`; vacío en otro caso (`VALIDACION`). |
 | `contenido` | string | Obligatorio, máx. 20 000 caracteres. |
 | `acuerdo` | string | Obligatorio si la sección tiene `requiereAcuerdo: true`; si no, se guarda vacío. Máx. 20 000. |
@@ -107,6 +107,7 @@ Los catálogos de dominio son **datos, no código**: el API ofrece un mecanismo 
 | `secciones` | `requiereAcuerdo: bool`, `admiteConListaCerrada: bool` (opcional), `alFinal: bool` (opcional) | `asuntos` (false) y `asuntos-generales` ("Asunto general": `admiteConListaCerrada`, `alFinal`) |
 | `puntosFijos` | `texto`, `posicion` (`inicio`/`final`), `condicion` (`siempre`/`actasPendientes`), `encabezado: bool` | `orden-dia`, `acta-anterior`, `asuntos-generales` (ver "Puntos fijos") |
 | `remitentes` | `siglas` (opcional, forma corta para mostrar), `admiteTextoLibre: bool` (opcional) | `oaj` ("Órgano de Administración Judicial (OAJ)", siglas `OAJ`), `tdj` ("Tribunal de Disciplina Judicial (TDJ)", siglas `TDJ`), `otro` ("Otro", `admiteTextoLibre`) |
+| `integrantes` | `tratamiento`, `nombre`, `genero`, `cargo` | Integrantes de la Junta de Coordinación (firman el acta y abren su redacción): `secretario-ejecutivo-oaj` (Maestro César Mauricio López Ramírez), `secretario-general-tdj` (Doctor Gonzalo Martínez García). Hoy solo semilla; su administración (altas, bajas, cambios) queda pendiente. |
 | `generos` | — | `mujer`, `hombre` |
 | `gradosAcademicos` | `femenino`, `masculino` (tratamiento según el género), `abreviaturaFemenino`, `abreviaturaMasculino` | `licenciatura` (Licenciada/Licenciado, Lic.), `maestria` (Maestra/Maestro, Mtra./Mtro.), `doctorado` (Doctora/Doctor, Dra./Dr.) |
 
@@ -118,7 +119,7 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 
 | Operación | Entrada | Salida | Errores |
 |---|---|---|---|
-| `listarCatalogos()` | — | `{ secciones, puntosFijos, remitentes, generos, gradosAcademicos }` (cada uno `Item[]`) | — |
+| `listarCatalogos()` | — | `{ secciones, puntosFijos, integrantes, remitentes, generos, gradosAcademicos }` (cada uno `Item[]`) | — |
 | `listarSesiones()` | — | `Sesion[]` (con derivados, ordenadas por `id`) | — |
 | `crearSesiones(fechas)` | `string[]` de fechas `YYYY-MM-DD` | `Sesion[]` (la lista completa actualizada) | `NO_AUTORIZADO`, `VALIDACION` |
 | `programarHora(id, hora)` | id de sesión + `"HH:MM"` (o `""` para borrarla) | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `LISTA_CERRADA`, `VALIDACION` |
@@ -135,10 +136,11 @@ Lo que **no** es catálogo y vive solo en el cliente: la estructura de la interf
 |---|---|---|---|
 | `marcarPunto(id, tratado)` | id de punto + bool | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `guardarDeliberacion(id, texto)` | id de punto + string | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
+| `obtenerEstadisticas()` | — | `{ sesiones: [{ id, numeroSesion, asuntos }], relevantes: [{ id, sesionId, contenido, contenidoFormato }] }` (solo sesiones **celebradas**, ordenadas por `id`; ya filtrado según el usuario) | — |
 | `marcarPuntos(sesionId, tratado)` | id de sesión + bool | `Punto[]` de la sesión (ordenados, ya filtrados según el usuario) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `adjuntarArchivos(puntoId, archivos)` | id de punto + archivos (binarios) | `Punto` actualizado (`version` + 1) | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `ARCHIVO_INVALIDO` |
-| `agregarInvitado(sesionId, datos)` | sesión + `{ nombre, genero, grado }` | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
-| `editarInvitado(sesionId, invitadoId, datos)` | ids + `{ nombre, genero, grado }` | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
+| `agregarInvitado(sesionId, datos)` | sesión + `{ nombre, genero, grado, cargo? }` | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
+| `editarInvitado(sesionId, invitadoId, datos)` | ids + `{ nombre, genero, grado, cargo? }` | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA`, `VALIDACION` |
 | `eliminarInvitado(sesionId, invitadoId)` | ids | `Sesion` actualizada | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
 | `eliminarArchivo(puntoId, archivoId)` | ids | `Punto` actualizado | `NO_AUTORIZADO`, `NO_ENCONTRADO`, `SESION_CELEBRADA` |
 | `descargarArchivo(archivoId)` | id | `{ nombre, tipo, blob }` (en el servidor real, una URL firmada) | `NO_AUTORIZADO`, `NO_ENCONTRADO` |
@@ -159,6 +161,7 @@ Notas de comportamiento:
 - `programarHora` fija la hora convocada **solo con la lista abierta** (`LISTA_CERRADA`) y la sesión sin celebrar; valida `HH:MM` (00:00–23:59, `VALIDACION`); `""` la borra. Es idempotente. `HORARIO_INVALIDO` si quedaría después de `horaTermino`.
 - `programarHoraTermino` fija la hora de término escrita a mano. **Se permite siempre**, también con la lista cerrada y con la sesión celebrada (las horas alimentan el acta). Valida `HH:MM` (`VALIDACION`); `""` la borra; idempotente. `HORARIO_INVALIDO` si quedaría antes de `horaProgramada`.
 - `agregarInvitado` exige `nombre` (el servidor lo normaliza: sin espacios sobrantes y con la primera letra de cada palabra en mayúscula, "ana LÓPEZ" → "Ana López"; de 1 a 200 caracteres), `genero` y `grado` que existan en sus catálogos (`VALIDACION`); máximo 50 invitados por sesión. El servidor asigna el `id`. Se permite con la lista cerrada; no con la sesión celebrada. `editarInvitado` reemplaza nombre, género y grado con las mismas reglas (el máximo no cuenta al propio invitado) y conserva su `id`. `editarInvitado`/`eliminarInvitado` con un id inexistente → `NO_ENCONTRADO`. El tratamiento ("Maestra Ana López") lo redacta el cliente con los atributos del grado.
+- `obtenerEstadisticas` sirve al informe estadístico (Historial). Por cada sesión celebrada, `asuntos` cuenta los puntos **registrados** (no los fijos), incluidos los asuntos generales y los agregados en la sesión. `relevantes` son los puntos registrados con `relevante: true` de esas sesiones, en el orden de la sesión y de `listarPuntos`. Los confidenciales que el usuario no puede ver no cuentan ni aparecen. Agrupar por periodos es presentación del cliente.
 - `establecerListaCerrada` es idempotente (repetir el mismo valor no cambia nada ni sube `version`); `VALIDACION` si `cerrada` no es booleano.
 - `editarPunto` con `version` distinta de la actual → `CONFLICTO` (el cliente debe recargar). Solo se modifican los campos permitidos del punto; el resultado se valida completo.
 - Una sesión **celebrada es inmutable**: no admite crear, editar ni eliminar puntos.

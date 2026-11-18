@@ -104,23 +104,42 @@ function limpiarNodoEnLinea(nodo) {
   return unicas.length ? { type: 'text', text: nodo.text, marks: unicas.map((type) => ({ type })) } : { type: 'text', text: nodo.text };
 }
 
-export function limpiarFormato(doc) {
-  if (!doc || doc.type !== 'doc' || !Array.isArray(doc.content) || doc.content.length > MAX_PARRAFOS) {
-    throw new ApiError('VALIDACION', 'El formato del contenido es inválido.');
-  }
+function invalido() {
+  return new ApiError('VALIDACION', 'El formato del contenido es inválido.');
+}
+
+function limpiarParrafo(parrafo) {
+  if (parrafo?.type !== 'paragraph') throw invalido();
+  const hijos = Array.isArray(parrafo.content) ? parrafo.content.map(limpiarNodoEnLinea) : [];
+  return hijos.length ? { type: 'paragraph', content: hijos } : { type: 'paragraph' };
+}
+
+function limpiarBloque(bloque) {
+  if (bloque?.type !== 'bulletList') return limpiarParrafo(bloque);
+  if (!Array.isArray(bloque.content) || bloque.content.length === 0) throw invalido();
   return {
-    type: 'doc',
-    content: doc.content.map((parrafo) => {
-      if (parrafo?.type !== 'paragraph') throw new ApiError('VALIDACION', 'El formato del contenido es inválido.');
-      const hijos = Array.isArray(parrafo.content) ? parrafo.content.map(limpiarNodoEnLinea) : [];
-      return hijos.length ? { type: 'paragraph', content: hijos } : { type: 'paragraph' };
+    type: 'bulletList',
+    content: bloque.content.map((item) => {
+      if (item?.type !== 'listItem' || !Array.isArray(item.content) || item.content.length === 0) throw invalido();
+      return { type: 'listItem', content: item.content.map(limpiarParrafo) };
     }),
   };
 }
 
+export function limpiarFormato(doc) {
+  if (!doc || doc.type !== 'doc' || !Array.isArray(doc.content) || doc.content.length > MAX_PARRAFOS) throw invalido();
+  return { type: 'doc', content: doc.content.map(limpiarBloque) };
+}
+
+function textoDeParrafo(p) {
+  return (p.content || []).map((n) => (n.type === 'hardBreak' ? '\n' : n.text)).join('');
+}
+
 export function textoDeFormato(doc) {
   return doc.content
-    .map((p) => (p.content || []).map((n) => (n.type === 'hardBreak' ? '\n' : n.text)).join(''))
+    .flatMap((b) => (b.type === 'bulletList'
+      ? b.content.map((item) => `• ${item.content.map(textoDeParrafo).join('\n')}`)
+      : [textoDeParrafo(b)]))
     .join('\n')
     .trim();
 }
@@ -286,5 +305,8 @@ export function validarInvitado(datos, catalogos, existentes) {
   if (!(catalogos.generos || []).some((g) => g.id === datos.genero)) throw new ApiError('VALIDACION', 'Elige el género del invitado.');
   if (!(catalogos.gradosAcademicos || []).some((g) => g.id === datos.grado)) throw new ApiError('VALIDACION', 'Elige el grado académico del invitado.');
   if (existentes.length >= MAX_INVITADOS) throw new ApiError('VALIDACION', `Una sesión admite como máximo ${MAX_INVITADOS} invitados.`);
-  return { nombre, genero: datos.genero, grado: datos.grado };
+  if (datos.cargo !== undefined && datos.cargo !== null && typeof datos.cargo !== 'string') throw new ApiError('VALIDACION', 'El cargo debe ser texto.');
+  const cargo = typeof datos.cargo === 'string' ? datos.cargo.trim().replace(/\s+/g, ' ') : '';
+  if (cargo.length > MAX_NOMBRE_INVITADO) throw new ApiError('VALIDACION', 'El cargo del invitado es demasiado largo.');
+  return { nombre, genero: datos.genero, grado: datos.grado, cargo };
 }
